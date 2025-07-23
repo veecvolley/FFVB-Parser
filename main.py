@@ -15,8 +15,17 @@ entities = {
 categories = {
     "PVA": "Volley-Assis",
     "RMC": "Masculin",
-    "RFD": "Féminin"
+    "RFD": "Féminin",
+    "1MB": "Masculin",
+    "2FC": "Féminin"
 }
+
+places = {
+    "DAVID DOUILLET": "Gymnase David Douillet, Coupvray",
+    "PARC DES SPORTS": "Gymnase David Douillet, Coupvray",
+    "BEGHIN": "Gymnase Pierre Beghin, Moirans"
+}
+
 
 #== Functions ==========================================================
 
@@ -181,7 +190,7 @@ v_date = 235
 v_place = 235
 v_place_type = 215
 
-with open('export20242025_utf8.csv', newline='') as csvfile:
+with open('export20252026_utf8.csv', newline='') as csvfile:
     reader = csv.reader(csvfile, delimiter=";", quotechar='"')
     i = 0
    
@@ -189,10 +198,7 @@ with open('export20242025_utf8.csv', newline='') as csvfile:
 
         entity = row[0]
         match = row[2]
-        if row[4] == "00:00":
-            hour = ""
-        else:
-            hour = row[4]
+        hour = "" if row[4] == "00:00" else row[4]
         logo_a = row[5]
         team_a = row[6]
         logo_b = row[7]
@@ -204,14 +210,17 @@ with open('export20242025_utf8.csv', newline='') as csvfile:
             dt = datetime.strptime(date, "%Y-%m-%d")
             date_full = f"{jours[dt.strftime('%A')]} {dt.day} {mois[dt.strftime('%B')]} {hour}"
 
-            if dt.isocalendar()[1] == 5:
+           # if dt.isocalendar()[1] == 7:
 
-                if entity == 'LIIDF' or entity == 'ADPVA':
-                    # print(str(v) + "|" + date_full + " - " + entity + " - " + match + " - " + team_a + " - " + team_b)
-                    
-                    title_entity = entities.get(entity, "null")
-                    category = categories.get(match[:3], "null")
-                    #category = match
+            if entity == 'LIIDF' or entity == 'ADPVA':
+
+                title_entity = entities.get(entity, "null")
+                category = categories.get(match[:3], "null")
+                #category = match
+
+                if category == 'Masculin':
+
+                    print(str(v) + "|" + date_full + " - " + entity + " - " + match + " - " + category + " - " + team_a + " - " + team_b + " - " + place)
 
                     overlay = Image.open("_img/objects/bande_01.png").convert("RGBA")
                     background.paste(overlay, (20, v), overlay)
@@ -258,11 +267,11 @@ with open('export20242025_utf8.csv', newline='') as csvfile:
 
                     draw_centered_text_overlay(background, team_b, 120, 560, v_team, fnt_bold_10, fill=(0, 0, 0, 255))
 
-                    draw_centered_text_overlay(background, date_full, 80, 705, v_date, fnt_bold_15, fill=(255, 255, 255, 255))
+                    draw_centered_text_overlay(background, date_full, 100, 705, v_date, fnt_bold_15, fill=(255, 255, 255, 255))
 
                     draw_centered_text_overlay(background, place, 200, 880, v_place, fnt_bold_15, fill=(255, 255, 255, 255))
 
-                    if place == 'DAVID DOUILLET' or place == 'PARC DES SPORTS' or place == 'ESPACE JEAN JACQUES LITZLER':
+                    if place == 'GYMNASE DAVID DOUILLET' or place == 'DAVID DOUILLET' or place == 'PARC DES SPORTS' or place == 'ESPACE JEAN JACQUES LITZLER':
                         place_type = "dom"
                     else:
                         place_type = "ext"
@@ -271,14 +280,14 @@ with open('export20242025_utf8.csv', newline='') as csvfile:
                     overlay = overlay.resize((40, 40))
                     background.paste(overlay, (995, v_place_type), overlay)
 
-                    v = v + v_delta
-                    v_entity = v_entity + v_delta
-                    v_category = v_category + v_delta
-                    v_logo = v_logo + v_delta
-                    v_team = v_team + v_delta
-                    v_date = v_date + v_delta
-                    v_place = v_place + v_delta
-                    v_place_type = v_place_type + v_delta
+                    v += v_delta
+                    v_entity += v_delta
+                    v_category += v_delta
+                    v_logo += v_delta
+                    v_team += v_delta
+                    v_date += v_delta
+                    v_place += v_delta
+                    v_place_type += v_delta
 
 background.save("output.png")
 #background.show()
