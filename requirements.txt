@@ -1,1 +1,4 @@
-Pillow
+pillow
+fastapi
+uvicorn
+requests

@@ -1,8 +1,9 @@
 import csv
+import requests
 import textwrap
 from PIL import Image, ImageFont, ImageDraw
 from datetime import datetime
-
+import io
 
 #== Configuration ======================================================
 
@@ -10,14 +11,19 @@ jours = {"Monday": "Lundi", "Tuesday": "Mardi", "Wednesday": "Mercredi", "Thursd
 mois = {"January": "janvier", "February": "février", "March": "mars", "April": "avril", "May": "mai", "June": "juin", "July": "juillet", "August": "août", "September": "septembre", "October": "octobre", "November": "novembre", "December": "décembre"}
 entities = {
     "LIIDF": "Championnat Régional",
-    "ADPVA": "Championnat de France"
+    "ADPVA": "Championnat de France",
+    "PTIDF77": "Championnat Départemental"
 }
+entities_str = ['LIIDF', 'ADPVA', 'PTIDF77']
+
 categories = {
     "PVA": "Volley-Assis",
     "RMC": "Masculin",
     "RFD": "Féminin",
     "1MB": "Masculin",
-    "2FC": "Féminin"
+    "2FC": "Féminin",
+    "ARA": "Masculin",
+    "ARF": "Féminin",
 }
 
 places = {
@@ -28,6 +34,21 @@ places = {
 
 
 #== Functions ==========================================================
+
+def fetch_csv_utf8():
+    url = "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_calendrier_export_club.php"
+    payload = {
+        "cnclub": "0775819",
+        "cal_saison": "2025/2026",
+        "typ_edition": "E",
+        "type": "RES"
+    }
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    r = requests.post(url, data=payload, headers=headers)
+    r.raise_for_status()
+    csv_latin1_bytes = r.content  # type: bytes
+    csv_utf8_str = csv_latin1_bytes.decode('latin1').encode('utf-8').decode('utf-8')
+    return io.StringIO(csv_utf8_str)
 
 def paste_image_fit_box(
     background: Image.Image,
@@ -172,28 +193,38 @@ def draw_centered_text_overlay(
     return background_img
 
 #== Main ===============================================================
+def generate_filtered_image(categories_filter=None, date_start=None, date_end=None):
+    # """
+    # categories_filter: liste de codes catégorie (ex ["RMC", "PVA", ...]) ou None (toutes)
+    # date_start/date_end: string format "YYYY-MM-DD" ou None (pas de borne)
+    # """
 
-# get a font
-fnt = ImageFont.truetype("_font/DejaVuSans.ttf", size=50)
-fnt_bold_10 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=10)
-fnt_bold_15 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=15)
+    # get a font
+    fnt = ImageFont.truetype("_font/DejaVuSans.ttf", size=50)
+    fnt_bold_10 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=10)
+    fnt_bold_15 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=15)
 
-background = Image.open("_img/objects/background_01.png").convert("RGBA")
+    background = Image.open("_img/objects/background_01.png").convert("RGBA")
 
-v = 200
-v_entity = 225
-v_category = 255
-v_delta = 80
-v_logo = 205
-v_team = 235
-v_date = 235
-v_place = 235
-v_place_type = 215
+    v = 200
+    v_entity = 225
+    v_category = 255
+    v_delta = 80
+    v_logo = 205
+    v_team = 235
+    v_date = 235
+    v_place = 235
+    v_place_type = 215
 
-with open('export20252026_utf8.csv', newline='') as csvfile:
+    # -- Parsing dates limites --
+    date_start_dt = datetime.strptime(date_start, "%Y-%m-%d") if date_start else None
+    date_end_dt = datetime.strptime(date_end, "%Y-%m-%d") if date_end else None
+
+    # with open('export20252026_utf8.csv', newline='') as csvfile:
+    #     reader = csv.reader(csvfile, delimiter=";", quotechar='"')
+    csvfile = fetch_csv_utf8()
     reader = csv.reader(csvfile, delimiter=";", quotechar='"')
-    i = 0
-   
+
     for row in reader:
 
         entity = row[0]
@@ -206,88 +237,109 @@ with open('export20252026_utf8.csv', newline='') as csvfile:
         place = row[12]
         date = row[3]
 
-        if date != 'Date':
-            dt = datetime.strptime(date, "%Y-%m-%d")
-            date_full = f"{jours[dt.strftime('%A')]} {dt.day} {mois[dt.strftime('%B')]} {hour}"
+        # Si la date n'est pas précisé on passe à la ligne suivante
+        if date == 'Date':
+            continue
+        
+        dt = datetime.strptime(date, "%Y-%m-%d")
+        date_full = f"{jours[dt.strftime('%A')]} {dt.day} {mois[dt.strftime('%B')]} {hour}"
 
-           # if dt.isocalendar()[1] == 7:
+        # ==== FILTRAGE PAR CATÉGORIE ====
+        cat_code = match[:3]
+        # print("CAT_FIL:" + str(categories_filter))
+        # print("CAT_CDE:" + str(cat_code))
+        # On prend la catégorie du match, sinon None
+        if categories_filter is not None:
+            # Si la catégorie n'est pas dans la liste, on skip
+            if cat_code not in categories_filter:
+                continue
 
-            if entity == 'LIIDF' or entity == 'ADPVA':
+        # ==== FILTRAGE PAR DATE ====
+        if date_start_dt and dt < date_start_dt:
+            continue
+        if date_end_dt and dt > date_end_dt:
+            continue
 
-                title_entity = entities.get(entity, "null")
-                category = categories.get(match[:3], "null")
-                #category = match
+        # Si l'entité n'estpas géré on passe à la ligne suivante
+        if entity not in entities_str:
+            continue
 
-                if category == 'Masculin':
+        title_entity = entities.get(entity, "null")
+        category = categories.get(match[:3], "null")
+        #category = match
 
-                    print(str(v) + "|" + date_full + " - " + entity + " - " + match + " - " + category + " - " + team_a + " - " + team_b + " - " + place)
+        print(str(v) + "|" + date_full + " - " + entity + " - " + match + " - " + category + " - " + team_a + " - " + team_b + " - " + place)
 
-                    overlay = Image.open("_img/objects/bande_01.png").convert("RGBA")
-                    background.paste(overlay, (20, v), overlay)
+        overlay = Image.open("_img/objects/bande_01.png").convert("RGBA")
+        background.paste(overlay, (20, v), overlay)
 
-                    # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
-                    # draw = ImageDraw.Draw(img)
-                    # draw.multiline_text((10, 10), title_entity, font=fnt_bold_15, fill=(255, 255, 255, 255))
-                    # background.paste(img, (30, v_entity), img)
+        # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
+        # draw = ImageDraw.Draw(img)
+        # draw.multiline_text((10, 10), title_entity, font=fnt_bold_15, fill=(255, 255, 255, 255))
+        # background.paste(img, (30, v_entity), img)
 
-                    draw_centered_text_overlay(background, title_entity, 115, 95, v_entity, fnt_bold_15, fill=(255, 255, 255, 255))
+        draw_centered_text_overlay(background, title_entity, 115, 95, v_entity, fnt_bold_15, fill=(255, 255, 255, 255))
 
-                    # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
-                    # draw = ImageDraw.Draw(img)
-                    # draw.multiline_text((10, 10), category, font=fnt_bold_15, fill=(255, 255, 255, 255))
-                    # background.paste(img, (38, v_category), img)
+        # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
+        # draw = ImageDraw.Draw(img)
+        # draw.multiline_text((10, 10), category, font=fnt_bold_15, fill=(255, 255, 255, 255))
+        # background.paste(img, (38, v_category), img)
 
-                    draw_centered_text_overlay(background, category, 115, 95, v_category, fnt_bold_15, fill=(255, 255, 255, 255))
+        draw_centered_text_overlay(background, category, 115, 95, v_category, fnt_bold_15, fill=(255, 255, 255, 255))
 
-                    # overlay = Image.open("_img/clubs/" + logo_a + ".png").convert("RGBA")
-                    # overlay = overlay.resize((65, 65))
-                    # background.paste(overlay, (170, v_logo), overlay)
+        # overlay = Image.open("_img/clubs/" + logo_a + ".png").convert("RGBA")
+        # overlay = overlay.resize((65, 65))
+        # background.paste(overlay, (170, v_logo), overlay)
 
-                    #background = paste_image_with_fixed_width(background, "_img/clubs/" + logo_a + ".png", 170, v_logo, 65)
-                    background = paste_image_fit_box(background, "_img/clubs/" + logo_a + ".png", 170, v_logo, 65, 65)
+        #background = paste_image_with_fixed_width(background, "_img/clubs/" + logo_a + ".png", 170, v_logo, 65)
+        background = paste_image_fit_box(background, "_img/clubs/" + logo_a + ".png", 170, v_logo, 65, 65)
 
-                    # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
-                    # draw = ImageDraw.Draw(img)
-                    # draw.multiline_text((10, 10), team_a, font=fnt_bold_10, fill=(0, 0, 0, 255))
-                    # background.paste(img, (240, v_team), img)
+        # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
+        # draw = ImageDraw.Draw(img)
+        # draw.multiline_text((10, 10), team_a, font=fnt_bold_10, fill=(0, 0, 0, 255))
+        # background.paste(img, (240, v_team), img)
 
-                    draw_centered_text_overlay(background, team_a, 120, 310, v_team, fnt_bold_10, fill=(0, 0, 0, 255))
+        draw_centered_text_overlay(background, team_a, 120, 310, v_team, fnt_bold_10, fill=(0, 0, 0, 255))
 
-                    # overlay = Image.open("_img/clubs/" + logo_b + ".png").convert("RGBA")
-                    # overlay = overlay.resize((65, 65))
-                    # background.paste(overlay, (425, v_logo), overlay)
+        # overlay = Image.open("_img/clubs/" + logo_b + ".png").convert("RGBA")
+        # overlay = overlay.resize((65, 65))
+        # background.paste(overlay, (425, v_logo), overlay)
 
-                    #background = paste_image_with_fixed_width(background, "_img/clubs/" + logo_b + ".png", 425, v_logo, 65)
-                    background = paste_image_fit_box(background, "_img/clubs/" + logo_b + ".png", 425, v_logo, 65, 65)
+        #background = paste_image_with_fixed_width(background, "_img/clubs/" + logo_b + ".png", 425, v_logo, 65)
+        background = paste_image_fit_box(background, "_img/clubs/" + logo_b + ".png", 425, v_logo, 65, 65)
 
-                    # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
-                    # draw = ImageDraw.Draw(img)
-                    # draw.multiline_text((10, 10), team_b, font=fnt_bold_10, fill=(0, 0, 0, 255))
-                    # background.paste(img, (495, v_team), img)
+        # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
+        # draw = ImageDraw.Draw(img)
+        # draw.multiline_text((10, 10), team_b, font=fnt_bold_10, fill=(0, 0, 0, 255))
+        # background.paste(img, (495, v_team), img)
 
-                    draw_centered_text_overlay(background, team_b, 120, 560, v_team, fnt_bold_10, fill=(0, 0, 0, 255))
+        draw_centered_text_overlay(background, team_b, 120, 560, v_team, fnt_bold_10, fill=(0, 0, 0, 255))
 
-                    draw_centered_text_overlay(background, date_full, 100, 705, v_date, fnt_bold_15, fill=(255, 255, 255, 255))
+        draw_centered_text_overlay(background, date_full, 100, 705, v_date, fnt_bold_15, fill=(255, 255, 255, 255))
 
-                    draw_centered_text_overlay(background, place, 200, 880, v_place, fnt_bold_15, fill=(255, 255, 255, 255))
+        draw_centered_text_overlay(background, place, 200, 880, v_place, fnt_bold_15, fill=(255, 255, 255, 255))
 
-                    if place == 'GYMNASE DAVID DOUILLET' or place == 'DAVID DOUILLET' or place == 'PARC DES SPORTS' or place == 'ESPACE JEAN JACQUES LITZLER':
-                        place_type = "dom"
-                    else:
-                        place_type = "ext"
+        if place == 'GYMNASE DAVID DOUILLET' or place == 'DAVID DOUILLET' or place == 'PARC DES SPORTS' or place == 'ESPACE JEAN JACQUES LITZLER':
+            place_type = "dom"
+        else:
+            place_type = "ext"
 
-                    overlay = Image.open("_img/objects/" + place_type + ".png").convert("RGBA")
-                    overlay = overlay.resize((40, 40))
-                    background.paste(overlay, (995, v_place_type), overlay)
+        overlay = Image.open("_img/objects/" + place_type + ".png").convert("RGBA")
+        overlay = overlay.resize((40, 40))
+        background.paste(overlay, (995, v_place_type), overlay)
 
-                    v += v_delta
-                    v_entity += v_delta
-                    v_category += v_delta
-                    v_logo += v_delta
-                    v_team += v_delta
-                    v_date += v_delta
-                    v_place += v_delta
-                    v_place_type += v_delta
+        v += v_delta
+        v_entity += v_delta
+        v_category += v_delta
+        v_logo += v_delta
+        v_team += v_delta
+        v_date += v_delta
+        v_place += v_delta
+        v_place_type += v_delta
+    return background
+    #background.save("output.png")
+    #background.show()
 
-background.save("output.png")
-#background.show()
+
+# img = generate_filtered_image("2FC","2025-10-13","2025-10-20")
+# img.save("output.png")
