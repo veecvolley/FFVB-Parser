@@ -15,6 +15,8 @@ CATEGORIES = {
     "2FC": "SF1 - Féminin"
 }
 
+VERSION = open("VERSION.md", encoding="utf-8").readline().strip()
+
 # ---- FastAPI APP ----
 app = FastAPI()
 
@@ -22,8 +24,7 @@ app.mount("/static", StaticFiles(directory="_img"), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 def index():
-    # Formulaire HTML + JS (auto-suffisant)
-    return """
+    return f"""
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -32,24 +33,24 @@ def index():
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <style>
-        html, body {
+        html, body {{
             height: 100%;
-        }
-        body {
+        }}
+        body {{
             font-family: Arial, sans-serif;
             background: #f9f9fa;
             padding: 22px;
             min-height: 100vh;
-        }
-        .container-flex {
+        }}
+        .container-flex {{
             display: flex;
             justify-content: center;
             gap: 2em;
             align-items: flex-start;
             max-width: 1100px;
             margin: auto;
-        }
-        .form-card {
+        }}
+        .form-card {{
             background: white;
             border-radius: 20px;
             box-shadow: 0 2px 14px #ddd;
@@ -57,8 +58,8 @@ def index():
             min-width: 300px;
             max-width: 500px;
             flex: 1 1 320px;
-        }
-        .image-holder {
+        }}
+        .image-holder {{
             text-align: center;
             margin-top: 0.5em;
             background: white;
@@ -72,40 +73,40 @@ def index():
             align-items: flex-start;
             justify-content: center;
             min-height: 220px;
-        }
-        #resultImg {
+        }}
+        #resultImg {{
             max-width: 100%;
             max-height: 55vw;
             box-shadow: 0 2px 16px #ccc;
             border-radius: 16px;
             display: none;
             cursor: zoom-in;
-        }
-        h1 {
+        }}
+        h1 {{
             color: #0083d1;
             display: inline-block;
             vertical-align: middle;
             margin-left: 0.5em;
             font-size: 2em;
-        }
-        .main-logo {
+        }}
+        .main-logo {{
             height: 48px;
             vertical-align: middle;
             margin-right: 0.7em;
             margin-bottom: 8px;
             display: inline-block;
-        }
-        label {
+        }}
+        label {{
             font-weight: bold;
-        }
-        .row {
+        }}
+        .row {{
             margin-bottom: 1.2em;
-        }
-        select, input[type=date] {
+        }}
+        select, input[type=date] {{
             padding: 0.4em;
             font-size: 1em;
-        }
-        button {
+        }}
+        button {{
             padding: 0.6em 1.3em;
             font-size: 1em;
             background: #0083d1;
@@ -113,24 +114,24 @@ def index():
             border: none;
             border-radius: 8px;
             cursor: pointer;
-        }
-        button:hover {
+        }}
+        button:hover {{
             background: #005fa3;
-        }
-        #loading {
+        }}
+        #loading {{
             display: none;
-        }
-        .dates-row {
+        }}
+        .dates-row {{
             display: flex;
             gap: 1em;
             align-items: flex-end;
-        }
-        .date-col {
+        }}
+        .date-col {{
             display: flex;
             flex-direction: column;
             flex: 1 1 0;
-        }
-        #versionInfo {
+        }}
+        #versionInfo {{
             color: #999;
             font-size: 0.7em;
             text-align: center;
@@ -143,9 +144,9 @@ def index():
             pointer-events: none;
             user-select: none;
             letter-spacing: 0.03em;
-        }
+        }}
         /* Lightbox Modal styles */
-        #imgModal {
+        #imgModal {{
             display: none;
             position: fixed;
             z-index: 9999;
@@ -153,15 +154,15 @@ def index():
             background: rgba(10,16,25,0.88);
             align-items: center; justify-content: center;
             transition: background 0.2s;
-        }
-        #imgModal img {
+        }}
+        #imgModal img {{
             max-width: 96vw;
             max-height: 88vh;
             border-radius: 15px;
             box-shadow: 0 2px 28px #000a;
             background: #fff;
-        }
-        #imgModalClose {
+        }}
+        #imgModalClose {{
             position: absolute;
             top: 28px;
             right: 44px;
@@ -172,39 +173,39 @@ def index():
             user-select: none;
             z-index: 2;
             text-shadow: 0 2px 12px #000c;
-        }
-        #imgModal:hover #imgModalClose { color: #fff; }
+        }}
+        #imgModal:hover #imgModalClose {{ color: #fff; }}
 
-        @media (max-width: 900px) {
-            .container-flex {
+        @media (max-width: 900px) {{
+            .container-flex {{
                 flex-direction: column;
                 gap: 1.2em;
                 align-items: stretch;
-            }
-            .image-holder, .form-card {
+            }}
+            .image-holder, .form-card {{
                 min-width: 0;
                 max-width: 100%;
                 margin-left: 0; margin-right: 0;
                 padding-left: 0.5em; padding-right: 0.5em;
-            }
-            h1 { font-size: 1.25em; }
-            .main-logo { height: 32px; margin-bottom: 4px; }
-        }
-        @media (max-width: 600px) {
-            body { padding: 6px; }
-            .form-card { padding: 1em 0.7em; }
-            .image-holder { padding: 0.5em 0.3em 1em 0.3em; }
-            .row { margin-bottom: 0.7em; }
-            #resultImg { max-height: 38vw; }
-            #imgModal img { max-width: 99vw; max-height: 76vh; }
-            #imgModalClose { top:10px; right:16px; font-size:1.4em;}
-        }
-        @media (max-width: 440px) {
-            .dates-row { flex-direction: column; gap: 0.3em; }
-            .date-col { width: 100%; }
-            .form-card { min-width: 0; }
-            .image-holder { min-width: 0; }
-        }
+            }}
+            h1 {{ font-size: 1.25em; }}
+            .main-logo {{ height: 32px; margin-bottom: 4px; }}
+        }}
+        @media (max-width: 600px) {{
+            body {{ padding: 6px; }}
+            .form-card {{ padding: 1em 0.7em; }}
+            .image-holder {{ padding: 0.5em 0.3em 1em 0.3em; }}
+            .row {{ margin-bottom: 0.7em; }}
+            #resultImg {{ max-height: 38vw; }}
+            #imgModal img {{ max-width: 99vw; max-height: 76vh; }}
+            #imgModalClose {{ top:10px; right:16px; font-size:1.4em;}}
+        }}
+        @media (max-width: 440px) {{
+            .dates-row {{ flex-direction: column; gap: 0.3em; }}
+            .date-col {{ width: 100%; }}
+            .form-card {{ min-width: 0; }}
+            .image-holder {{ min-width: 0; }}
+        }}
     </style>
 </head>
 <body>
@@ -252,11 +253,11 @@ def index():
     </div>
 
 <script>
-const APP_VERSION = "v2025.07.24";
+const APP_VERSION = "{VERSION}";
 
-document.addEventListener("DOMContentLoaded", async function(){
+document.addEventListener("DOMContentLoaded", async function(){{
     // --- Calcul automatique samedi/dimanche de la semaine courante ---
-    function getWeekendDates() {
+    function getWeekendDates() {{
         const now = new Date();
         const day = now.getDay();
         const monday = new Date(now);
@@ -265,23 +266,23 @@ document.addEventListener("DOMContentLoaded", async function(){
         saturday.setDate(monday.getDate() + 5);
         const sunday = new Date(monday);
         sunday.setDate(monday.getDate() + 6);
-        function fmt(d) { return d.toISOString().slice(0,10); }
-        return { saturday: fmt(saturday), sunday: fmt(sunday) };
-    }
+        function fmt(d) {{ return d.toISOString().slice(0,10); }}
+        return {{ saturday: fmt(saturday), sunday: fmt(sunday) }};
+    }}
     const weekend = getWeekendDates();
     document.getElementById("date_start").value = weekend.saturday;
     document.getElementById("date_end").value = weekend.sunday;
 
-    fetch("/categories").then(r=>r.json()).then(cats=>{
+    fetch("/categories").then(r=>r.json()).then(cats=>{{
         const sel = document.getElementById("categories");
-        Object.entries(cats).forEach(([val, label]) => {
+        Object.entries(cats).forEach(([val, label]) => {{
             let opt = document.createElement("option");
             opt.value = val; opt.text = label;
             sel.add(opt);
-        });
-    });
+        }});
+    }});
 
-    document.getElementById("filterForm").onsubmit = async function(e){
+    document.getElementById("filterForm").onsubmit = async function(e){{
         e.preventDefault();
         document.getElementById("loading").style.display = "inline";
         document.getElementById("resultImg").style.display = "none";
@@ -292,32 +293,32 @@ document.addEventListener("DOMContentLoaded", async function(){
         if(date_start) url += "&date_start=" + encodeURIComponent(date_start);
         if(date_end) url += "&date_end=" + encodeURIComponent(date_end);
 
-        fetch(url).then(r => r.blob()).then(blob => {
+        fetch(url).then(r => r.blob()).then(blob => {{
             let imgUrl = URL.createObjectURL(blob);
             let img = document.getElementById("resultImg");
             img.src = imgUrl;
             img.style.display = "block";
             document.getElementById("loading").style.display = "none";
-        });
-    };
+        }});
+    }};
     document.getElementById("versionInfo").textContent = "Version : " + APP_VERSION;
 
     // --- Modal/lightbox pour agrandir l'image ---
-    document.getElementById("resultImg").onclick = function() {
-        if(this.src && this.style.display !== "none") {
+    document.getElementById("resultImg").onclick = function() {{
+        if(this.src && this.style.display !== "none") {{
             document.getElementById("imgModalContent").src = this.src;
             document.getElementById("imgModal").style.display = "flex";
-        }
-    };
-    document.getElementById("imgModalClose").onclick = function() {
+        }}
+    }};
+    document.getElementById("imgModalClose").onclick = function() {{
         document.getElementById("imgModal").style.display = "none";
-    };
-    document.getElementById("imgModal").onclick = function(e) {
-        if(e.target === this) {
+    }};
+    document.getElementById("imgModal").onclick = function(e) {{
+        if(e.target === this) {{
             document.getElementById("imgModal").style.display = "none";
-        }
-    };
-});
+        }}
+    }};
+}});
 </script>
 </body>
 </html>

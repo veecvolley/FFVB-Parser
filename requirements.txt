@@ -2,3 +2,4 @@ pillow
 fastapi
 uvicorn
 requests
+pdfplumber

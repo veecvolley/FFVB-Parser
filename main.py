@@ -1,9 +1,11 @@
 import csv
 import requests
+import re
 import textwrap
+import io
+import pdfplumber
 from PIL import Image, ImageFont, ImageDraw
 from datetime import datetime
-import io
 
 #== Configuration ======================================================
 
@@ -26,14 +28,47 @@ categories = {
     "ARF": "Féminin",
 }
 
-places = {
-    "DAVID DOUILLET": "Gymnase David Douillet, Coupvray",
-    "PARC DES SPORTS": "Gymnase David Douillet, Coupvray",
-    "BEGHIN": "Gymnase Pierre Beghin, Moirans"
-}
-
-
 #== Functions ==========================================================
+
+def get_gymnase_address(codmatch, codent):
+    """
+    Recupere l'adresse complète du Gymnase à partir du PDF du match
+    
+    codmatch : code du match
+    codent : code de la ligue
+    """
+    url = "https://www.ffvbbeach.org/ffvbapp/adressier/fiche_match_ffvb.php"
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    data = {'codmatch': codmatch, 'codent': codent}
+    response = requests.post(url, headers=headers, data=data)
+    if response.status_code != 200 or response.headers.get('Content-Type') != 'application/pdf':
+        print("Erreur lors du téléchargement du PDF.")
+        return None
+
+    with pdfplumber.open(io.BytesIO(response.content)) as pdf:
+        text = ''
+        for page in pdf.pages:
+            t = page.extract_text()
+            if t:
+                text += t + '\n'
+
+        # Extraction du bloc "Salle"
+        match = re.search(r'Salle\s*\n(.*?)(Sol\s*:|Arbitre\.s|$)', text, re.DOTALL)
+        if match:
+            salle_block = match.group(1)
+            lines = [line.strip() for line in salle_block.split('\n') if line.strip()]
+            if lines:
+                nom = lines[0]
+                adresse = ' '.join(lines[1:])  # ou '\n'.join(lines[1:]) si tu préfères multi-lignes
+
+                match_adr = re.search(r"(.+)\s(\d{5})\s(.+)", adresse)
+                if match_adr:
+                    rue = match_adr.group(1).strip().lower()
+                    code_postal = match_adr.group(2)
+                    ville = match_adr.group(3).strip()
+
+                return {'nom': nom, 'rue': rue, 'code_postal': code_postal, 'ville': ville}
+    return None
 
 def fetch_csv_utf8():
     url = "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_calendrier_export_club.php"
@@ -194,27 +229,35 @@ def draw_centered_text_overlay(
 
 #== Main ===============================================================
 def generate_filtered_image(categories_filter=None, date_start=None, date_end=None):
-    # """
-    # categories_filter: liste de codes catégorie (ex ["RMC", "PVA", ...]) ou None (toutes)
-    # date_start/date_end: string format "YYYY-MM-DD" ou None (pas de borne)
-    # """
+    """
+    categories_filter: liste de codes catégorie (ex ["RMC", "PVA", ...]) ou None (toutes)
+    date_start/date_end: string format "YYYY-MM-DD" ou None (pas de borne)
+    """
+
+    # multiplicateur
+    m = 2
 
     # get a font
-    fnt = ImageFont.truetype("_font/DejaVuSans.ttf", size=50)
-    fnt_bold_10 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=10)
-    fnt_bold_15 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=15)
+    fnt = ImageFont.truetype("_font/DejaVuSans.ttf", size=50*m)
+    fnt_bold_10 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=10*m)
+    fnt_bold_12 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=12*m)
+    fnt_bold_13 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=13*m)
+    fnt_bold_14 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=14*m)
+    fnt_bold_15 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=15*m)
+  
 
-    background = Image.open("_img/objects/background_01.png").convert("RGBA")
+    background = Image.open("_img/objects/background_0"+ str(m) +".png").convert("RGBA")
 
-    v = 200
-    v_entity = 225
-    v_category = 255
-    v_delta = 80
-    v_logo = 205
-    v_team = 235
-    v_date = 235
-    v_place = 235
-    v_place_type = 215
+
+    v = 200 * m
+    v_entity = 225*m
+    v_category = 255*m
+    v_delta = 80*m
+    v_logo = 205*m
+    v_team = 235*m
+    v_date = 235*m
+    v_place = 213*m
+    v_place_type = 215*m
 
     # -- Parsing dates limites --
     date_start_dt = datetime.strptime(date_start, "%Y-%m-%d") if date_start else None
@@ -270,54 +313,64 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
 
         print(str(v) + "|" + date_full + " - " + entity + " - " + match + " - " + category + " - " + team_a + " - " + team_b + " - " + place)
 
-        overlay = Image.open("_img/objects/bande_01.png").convert("RGBA")
-        background.paste(overlay, (20, v), overlay)
+        overlay = Image.open("_img/objects/bande_0"+ str(m) +".png").convert("RGBA")
+        background.paste(overlay, (20*m, v), overlay)
 
         # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
         # draw = ImageDraw.Draw(img)
         # draw.multiline_text((10, 10), title_entity, font=fnt_bold_15, fill=(255, 255, 255, 255))
         # background.paste(img, (30, v_entity), img)
 
-        draw_centered_text_overlay(background, title_entity, 115, 95, v_entity, fnt_bold_15, fill=(255, 255, 255, 255))
+        draw_centered_text_overlay(background, title_entity, 115*m, 95*m, v_entity, fnt_bold_15, fill=(255, 255, 255, 255))
 
         # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
         # draw = ImageDraw.Draw(img)
         # draw.multiline_text((10, 10), category, font=fnt_bold_15, fill=(255, 255, 255, 255))
         # background.paste(img, (38, v_category), img)
 
-        draw_centered_text_overlay(background, category, 115, 95, v_category, fnt_bold_15, fill=(255, 255, 255, 255))
+        draw_centered_text_overlay(background, category, 115*m, 95*m, v_category, fnt_bold_15, fill=(255, 255, 255, 255))
 
         # overlay = Image.open("_img/clubs/" + logo_a + ".png").convert("RGBA")
         # overlay = overlay.resize((65, 65))
         # background.paste(overlay, (170, v_logo), overlay)
 
         #background = paste_image_with_fixed_width(background, "_img/clubs/" + logo_a + ".png", 170, v_logo, 65)
-        background = paste_image_fit_box(background, "_img/clubs/" + logo_a + ".png", 170, v_logo, 65, 65)
+        background = paste_image_fit_box(background, "_img/clubs/" + logo_a + ".png", 170*m, v_logo, 65*m, 65*m)
 
         # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
         # draw = ImageDraw.Draw(img)
         # draw.multiline_text((10, 10), team_a, font=fnt_bold_10, fill=(0, 0, 0, 255))
         # background.paste(img, (240, v_team), img)
 
-        draw_centered_text_overlay(background, team_a, 120, 310, v_team, fnt_bold_10, fill=(0, 0, 0, 255))
+        draw_centered_text_overlay(background, team_a, 120*m, 310*m, v_team, fnt_bold_13, fill=(0, 0, 0, 255))
 
         # overlay = Image.open("_img/clubs/" + logo_b + ".png").convert("RGBA")
         # overlay = overlay.resize((65, 65))
         # background.paste(overlay, (425, v_logo), overlay)
 
         #background = paste_image_with_fixed_width(background, "_img/clubs/" + logo_b + ".png", 425, v_logo, 65)
-        background = paste_image_fit_box(background, "_img/clubs/" + logo_b + ".png", 425, v_logo, 65, 65)
+        background = paste_image_fit_box(background, "_img/clubs/" + logo_b + ".png", 425*m, v_logo, 65*m, 65*m)
 
         # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
         # draw = ImageDraw.Draw(img)
         # draw.multiline_text((10, 10), team_b, font=fnt_bold_10, fill=(0, 0, 0, 255))
         # background.paste(img, (495, v_team), img)
 
-        draw_centered_text_overlay(background, team_b, 120, 560, v_team, fnt_bold_10, fill=(0, 0, 0, 255))
+        draw_centered_text_overlay(background, team_b, 120*m, 560*m, v_team, fnt_bold_13, fill=(0, 0, 0, 255))
 
-        draw_centered_text_overlay(background, date_full, 100, 705, v_date, fnt_bold_15, fill=(255, 255, 255, 255))
+        draw_centered_text_overlay(background, date_full, 100*m, 705*m, v_date, fnt_bold_15, fill=(255, 255, 255, 255))
 
-        draw_centered_text_overlay(background, place, 200, 880, v_place, fnt_bold_15, fill=(255, 255, 255, 255))
+        result = get_gymnase_address(match, entity)
+        if result:
+            place_nom = result["nom"]
+            place_adr = result["rue"]
+            place_ville= result["ville"]
+        else:
+            place_adr = "Adresse non trouvée"
+
+        draw_centered_text_overlay(background, place_nom, 210*m, 882*m, v_place, fnt_bold_14, fill=(255, 255, 255, 255))
+        draw_centered_text_overlay(background, place_adr, 210*m, 882*m, v_place + 40, fnt_bold_12, fill=(255, 255, 255, 255))
+        draw_centered_text_overlay(background, place_ville, 210*m, 882*m, v_place + 80, fnt_bold_15, fill=(255, 255, 255, 255))
 
         if place == 'GYMNASE DAVID DOUILLET' or place == 'DAVID DOUILLET' or place == 'PARC DES SPORTS' or place == 'ESPACE JEAN JACQUES LITZLER':
             place_type = "dom"
@@ -325,8 +378,8 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
             place_type = "ext"
 
         overlay = Image.open("_img/objects/" + place_type + ".png").convert("RGBA")
-        overlay = overlay.resize((40, 40))
-        background.paste(overlay, (995, v_place_type), overlay)
+        overlay = overlay.resize((40*m, 40*m))
+        background.paste(overlay, (995*m, v_place_type), overlay)
 
         v += v_delta
         v_entity += v_delta
