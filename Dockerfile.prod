@@ -1,29 +1,26 @@
-FROM python:3.13-slim
+FROM python:3.13-alpine
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     USER=veecvolley \
-    DEBIAN_FRONTEND=noninteractive \
     MPLCONFIGDIR=/tmp
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        build-essential \
-        libjpeg-dev \
-        zlib1g-dev \
+RUN apk add --no-cache \
+        build-base \
+        libjpeg-turbo-dev \
+        zlib-dev \
         libpng-dev \
-        libfreetype6-dev \
+        freetype-dev \
         fontconfig \
-        && rm -rf /var/lib/apt/lists/*
+        && addgroup -S ${USER} && adduser -S ${USER} -G ${USER}
 
 WORKDIR /app
+
 COPY . /app
+RUN chown -R ${USER}:${USER} /app
 
-RUN addgroup --system ${USER} && adduser --system --ingroup ${USER} ${USER} \
- && chown -R ${USER}:${USER} /app
-
-RUN pip install --upgrade --no-warn-script-location pip \
- && if [ -f requirements.txt ]; then pip install --no-warn-script-location --no-cache-dir -r requirements.txt; fi
+RUN pip install --upgrade --no-cache-dir pip \
+ && if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
 
 USER ${USER}
 

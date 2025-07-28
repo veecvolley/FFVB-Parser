@@ -1,0 +1,4 @@
+*.tgz
+.git/
+*.csv
+*.tar.gz
