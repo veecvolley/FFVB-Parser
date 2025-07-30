@@ -172,7 +172,9 @@ def draw_centered_text_overlay(
     center_x,
     center_y,
     fnt,
-    fill=(255,255,255,255)
+    fill=(255,255,255,255),
+    stroke_width=0,
+    stroke_fill=(0,0,0,255)
 ):
     """
     Affiche un texte centré (avec wordwrap) sur une image, en overlay transparent.
@@ -223,12 +225,12 @@ def draw_centered_text_overlay(
         w = bbox[2] - bbox[0]
         x = int(center_x - w/2)
         y = y_start + i * line_height
-        draw.text((x, y), line, font=fnt, fill=fill)
+        draw.text((x, y), line, font=fnt, fill=fill, stroke_width=stroke_width, stroke_fill=stroke_fill)
 
     return background_img
 
 #== Main ===============================================================
-def generate_filtered_image(categories_filter=None, date_start=None, date_end=None):
+def generate_filtered_image(categories_filter=None, date_start=None, date_end=None, title=None, format="pub"):
     """
     categories_filter: liste de codes catégorie (ex ["RMC", "PVA", ...]) ou None (toutes)
     date_start/date_end: string format "YYYY-MM-DD" ou None (pas de borne)
@@ -244,12 +246,13 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
     fnt_bold_13 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=13*m)
     fnt_bold_14 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=14*m)
     fnt_bold_15 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=15*m)
-  
+    fnt_gagalin_40 = ImageFont.truetype("_font/Gagalin-Regular.ttf", size=40*m)
 
-    background = Image.open("_img/objects/background_0"+ str(m) +".png").convert("RGBA")
+    background = Image.open("_img/objects/background_"+ format +".png").convert("RGBA")
 
 
-    v = 200 * m
+    v = 200*m
+    v_title = 50*m
     v_entity = 225*m
     v_category = 255*m
     v_delta = 80*m
@@ -280,7 +283,6 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         place = row[12]
         date = row[3]
 
-        # Si la date n'est pas précisé on passe à la ligne suivante
         if date == 'Date':
             continue
         
@@ -289,11 +291,7 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
 
         # ==== FILTRAGE PAR CATÉGORIE ====
         cat_code = match[:3]
-        # print("CAT_FIL:" + str(categories_filter))
-        # print("CAT_CDE:" + str(cat_code))
-        # On prend la catégorie du match, sinon None
         if categories_filter is not None:
-            # Si la catégorie n'est pas dans la liste, on skip
             if cat_code not in categories_filter:
                 continue
 
@@ -303,58 +301,28 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         if date_end_dt and dt > date_end_dt:
             continue
 
-        # Si l'entité n'estpas géré on passe à la ligne suivante
         if entity not in entities_str:
             continue
 
         title_entity = entities.get(entity, "null")
         category = categories.get(match[:3], "null")
-        #category = match
 
-        print(str(v) + "|" + date_full + " - " + entity + " - " + match + " - " + category + " - " + team_a + " - " + team_b + " - " + place)
+        print(format + " | " + date_full + " - " + entity + " - " + match + " - " + category + " - " + team_a + " - " + team_b + " - " + place)
 
         overlay = Image.open("_img/objects/bande_0"+ str(m) +".png").convert("RGBA")
         background.paste(overlay, (20*m, v), overlay)
 
-        # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
-        # draw = ImageDraw.Draw(img)
-        # draw.multiline_text((10, 10), title_entity, font=fnt_bold_15, fill=(255, 255, 255, 255))
-        # background.paste(img, (30, v_entity), img)
+        draw_centered_text_overlay(background, title, 425*m, 660*m, v_title, fnt_gagalin_40, fill=(192, 192, 192, 255), stroke_width=2, stroke_fill=(84, 84, 84, 255))
 
-        draw_centered_text_overlay(background, title_entity, 115*m, 95*m, v_entity, fnt_bold_15, fill=(255, 255, 255, 255))
+        draw_centered_text_overlay(background, title_entity, 115*m, 95*m, v_entity, fnt_bold_15, fill=(255, 255, 255, 255), stroke_width=1, stroke_fill=(0, 0, 0, 255))
 
-        # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
-        # draw = ImageDraw.Draw(img)
-        # draw.multiline_text((10, 10), category, font=fnt_bold_15, fill=(255, 255, 255, 255))
-        # background.paste(img, (38, v_category), img)
+        draw_centered_text_overlay(background, category, 115*m, 95*m, v_category, fnt_bold_15, fill=(255, 255, 255, 255), stroke_width=1, stroke_fill=(0, 0, 0, 255))
 
-        draw_centered_text_overlay(background, category, 115*m, 95*m, v_category, fnt_bold_15, fill=(255, 255, 255, 255))
-
-        # overlay = Image.open("_img/clubs/" + logo_a + ".png").convert("RGBA")
-        # overlay = overlay.resize((65, 65))
-        # background.paste(overlay, (170, v_logo), overlay)
-
-        #background = paste_image_with_fixed_width(background, "_img/clubs/" + logo_a + ".png", 170, v_logo, 65)
         background = paste_image_fit_box(background, "_img/clubs/" + logo_a + ".png", 170*m, v_logo, 65*m, 65*m)
-
-        # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
-        # draw = ImageDraw.Draw(img)
-        # draw.multiline_text((10, 10), team_a, font=fnt_bold_10, fill=(0, 0, 0, 255))
-        # background.paste(img, (240, v_team), img)
 
         draw_centered_text_overlay(background, team_a, 120*m, 310*m, v_team, fnt_bold_13, fill=(0, 0, 0, 255))
 
-        # overlay = Image.open("_img/clubs/" + logo_b + ".png").convert("RGBA")
-        # overlay = overlay.resize((65, 65))
-        # background.paste(overlay, (425, v_logo), overlay)
-
-        #background = paste_image_with_fixed_width(background, "_img/clubs/" + logo_b + ".png", 425, v_logo, 65)
         background = paste_image_fit_box(background, "_img/clubs/" + logo_b + ".png", 425*m, v_logo, 65*m, 65*m)
-
-        # img = Image.new("RGBA", (600, 100), (255, 255, 255, 0))
-        # draw = ImageDraw.Draw(img)
-        # draw.multiline_text((10, 10), team_b, font=fnt_bold_10, fill=(0, 0, 0, 255))
-        # background.paste(img, (495, v_team), img)
 
         draw_centered_text_overlay(background, team_b, 120*m, 560*m, v_team, fnt_bold_13, fill=(0, 0, 0, 255))
 
@@ -368,9 +336,9 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         else:
             place_adr = "Adresse non trouvée"
 
-        draw_centered_text_overlay(background, place_nom, 210*m, 882*m, v_place, fnt_bold_14, fill=(255, 255, 255, 255))
-        draw_centered_text_overlay(background, place_adr, 210*m, 882*m, v_place + 40, fnt_bold_12, fill=(255, 255, 255, 255))
-        draw_centered_text_overlay(background, place_ville, 210*m, 882*m, v_place + 80, fnt_bold_15, fill=(255, 255, 255, 255))
+        draw_centered_text_overlay(background, place_nom, 210*m, 882*m, v_place, fnt_bold_14, fill=(255, 255, 255, 255), stroke_width=1, stroke_fill=(0, 0, 0, 255))
+        draw_centered_text_overlay(background, place_adr, 210*m, 882*m, v_place + 40, fnt_bold_12, fill=(255, 255, 255, 255), stroke_width=1, stroke_fill=(0, 0, 0, 255))
+        draw_centered_text_overlay(background, place_ville, 210*m, 882*m, v_place + 80, fnt_bold_15, fill=(255, 255, 255, 255), stroke_width=1, stroke_fill=(0, 0, 0, 255))
 
         if place == 'GYMNASE DAVID DOUILLET' or place == 'DAVID DOUILLET' or place == 'PARC DES SPORTS' or place == 'ESPACE JEAN JACQUES LITZLER':
             place_type = "dom"
@@ -390,9 +358,3 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         v_place += v_delta
         v_place_type += v_delta
     return background
-    #background.save("output.png")
-    #background.show()
-
-
-# img = generate_filtered_image("2FC","2025-10-13","2025-10-20")
-# img.save("output.png")

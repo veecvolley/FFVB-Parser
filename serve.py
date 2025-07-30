@@ -221,6 +221,15 @@ def index():
             </div>
             <form id="filterForm">
                 <div class="row">
+                    <label for="custom_title">Titre :</label><br>
+                    <input type="text" id="custom_title" name="custom_title" style="width:100%;" placeholder="Ex: Week-end de Matchs !!">
+                </div>
+                <div class="row">
+                    <label>Format :</label><br>
+                    <label><input type="radio" name="format" value="pub" checked> Publication</label>
+                    <label style="margin-left:1.2em;"><input type="radio" name="format" value="story"> Story</label>
+                </div>
+                <div class="row">
                     <label for="categories">Catégories :</label><br>
                     <select id="categories" name="categories" multiple size="3" style="width:100%;"></select>
                 </div>
@@ -286,10 +295,14 @@ document.addEventListener("DOMContentLoaded", async function(){{
         e.preventDefault();
         document.getElementById("loading").style.display = "inline";
         document.getElementById("resultImg").style.display = "none";
+        let title = document.getElementById("custom_title").value;
+        let format = document.querySelector('input[name="format"]:checked').value;
         let cats = Array.from(document.getElementById("categories").selectedOptions).map(opt=>opt.value);
         let date_start = document.getElementById("date_start").value;
         let date_end   = document.getElementById("date_end").value;
         let url = "/image?"+cats.map(c=>"categories="+encodeURIComponent(c)).join("&");
+        if (title) url += "&title=" + encodeURIComponent(title);
+        if (format) url += "&format=" + encodeURIComponent(format);
         if(date_start) url += "&date_start=" + encodeURIComponent(date_start);
         if(date_end) url += "&date_end=" + encodeURIComponent(date_end);
 
@@ -326,32 +339,18 @@ document.addEventListener("DOMContentLoaded", async function(){{
 
 @app.get("/categories", response_class=JSONResponse)
 def categories():
-    # Renvoie la liste des catégories disponibles
     return CATEGORIES
 
 @app.get("/image")
 def image(
+    title: Optional[str] = None,
+    format: Optional[str] = "pub",
     categories: Optional[List[str]] = Query(None),
     date_start: Optional[str] = None,
     date_end: Optional[str] = None
 ):
-    # Ici tu peux brancher ta logique CSV + PIL selon les filtres demandés
-    img = generate_filtered_image(categories, date_start, date_end)
+    img = generate_filtered_image(categories, date_start, date_end, title, format)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     buf.seek(0)
     return StreamingResponse(buf, media_type="image/png")
-
-# ---------- LOGIQUE DE GÉNÉRATION FACTICE (à remplacer par ton vrai code) ------
-# def generate_filtered_image(categories, date_start, date_end):
-#     im = Image.new("RGBA", (700, 250), (255,255,255,255))
-#     d = ImageDraw.Draw(im)
-#     d.rectangle([(0,0), (699,249)], outline=(0,132,209), width=7)
-#     catstr = ", ".join(categories) if categories else "Toutes"
-#     datestr = f"{date_start or '-'} → {date_end or '-'}"
-#     txt = f"Généré pour :\nCatégories : {catstr}\nDates : {datestr}"
-#     d.text((40,60), txt, fill=(0,132,209), align="left")
-#     return im
-
-# Pour lancer :
-# uvicorn serve.py:app --reload --port 8000
