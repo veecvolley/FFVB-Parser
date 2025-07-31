@@ -13,3 +13,17 @@ The aim is to be able to dynamically generate regular graphical tables of the sc
 ---
 
 ## Installation - Deployment
+
+### Docker
+
+Build & Run
+
+```
+docker build -t veec-comm-generator:dev -f Dockerfile.dev .
+
+docker run -it --rm -v $PWD:/app -p 8000:8000 veec-comm-generator:dev
+```
+
+--> http://localhost:8000
+
+
