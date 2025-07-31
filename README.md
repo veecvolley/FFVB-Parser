@@ -1,5 +1,7 @@
 ## FFVB-Parser - Comm'Generator
 
+[![Release](https://img.shields.io/github/v/release/veecvolley/FFVB-Parser)](https://github.com/veecvolley/FFVB-Parser) [![Python Version](https://img.shields.io/badge/python-3.13-red.svg)](https://www.python.org/downloads/release/python-3130/)
+
 FFVB-Parser is a tool for parsing scores and data provided by the FFVB website (https://www.ffvb.org / https://www.ffvbbeach.org/ffvbapp/).
 The aim is to be able to dynamically generate regular graphical tables of the scores of the selected club.
 
