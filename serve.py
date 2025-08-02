@@ -32,17 +32,13 @@ def categories():
 
 @app.get("/image")
 def image(
-    mode: Optional[str] = "planning",  # "planning" ou "results"
+    mode: Optional[str] = "planning",  # "planning" or "results"
     title: Optional[str] = None,
     format: Optional[str] = "pub",
     categories: Optional[List[str]] = Query(None),
     date_start: Optional[str] = None,
     date_end: Optional[str] = None
 ):
-    # if mode == "results":
-    #     img = generate_results_image(categories, date_start, date_end, title, format)
-    # else:
-    #     img = generate_filtered_image(categories, date_start, date_end, title, format)
    
     img = generate_filtered_image(categories, date_start, date_end, title, format, mode)
 
