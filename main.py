@@ -9,6 +9,12 @@ from datetime import datetime
 
 #== Configuration ======================================================
 
+#saison = "2025/2026"
+saison = "2024/2025"
+
+club = "FS VAL D'EUROPE ESBLY COUPVRAY VB"
+club_id = "0775819"
+
 jours = {"Monday": "Lundi", "Tuesday": "Mardi", "Wednesday": "Mercredi", "Thursday": "Jeudi", "Friday": "Vendredi", "Saturday": "Samedi", "Sunday": "Dimanche"}
 mois = {"January": "janvier", "February": "février", "March": "mars", "April": "avril", "May": "mai", "June": "juin", "July": "juillet", "August": "août", "September": "septembre", "October": "octobre", "November": "novembre", "December": "décembre"}
 entities = {
@@ -258,8 +264,8 @@ def create_score_image(score):
     """
     Génère une image représentant un score de match de volley :
     - chaque set affiché verticalement (équipe A en haut, B en bas)
-    - fond jaune + texte noir pour le score gagnant du set
-    - fond noir + texte blanc pour le score perdant
+    - fond gagnant / perdant et texte configurables en RGB
+    - taille de police configurable
 
     Argument :
     - score : str, format '26-24,19-25,...'
@@ -267,6 +273,16 @@ def create_score_image(score):
     Retourne :
     - image PIL.Image
     """
+
+    # === Paramètres ===
+    FONT_SIZE = 40
+    OFFSET_Y = -5
+
+    COLOR_WIN_BG = (253, 197, 5)
+    COLOR_WIN_FG = (87, 87, 87)
+    COLOR_LOSE_BG = (38, 38, 38)
+    COLOR_LOSE_FG = (255, 255, 255)
+
     sets = []
     for s in score.split(','):
         try:
@@ -275,49 +291,44 @@ def create_score_image(score):
         except ValueError:
             continue
 
-    # Paramètres
+    # Dimensions
     set_count = len(sets)
-    box_width, box_height = 80, 50
-    padding, spacing = 20, 10
+    box_width, box_height = 61, 61
+    padding, spacing = 6, 6
     width = set_count * (box_width + spacing) + padding * 2 - spacing
     height = box_height * 2 + padding * 3
 
     image = Image.new("RGB", (width, height), "white")
     draw = ImageDraw.Draw(image)
 
-    try:
-        font = ImageFont.truetype("DejaVuSans-Bold.ttf", 22)
-    except:
-        font = ImageFont.load_default()
+    font = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", FONT_SIZE)
+
+    ascent, descent = font.getmetrics()
 
     for i, (a, b) in enumerate(sets):
         x = padding + i * (box_width + spacing)
         y_top = padding
         y_bottom = y_top + box_height + padding
 
-        # Définir couleurs
-        box_a = ("yellow", "black") if a > b else ("black", "white")
-        box_b = ("yellow", "black") if b > a else ("black", "white")
+        # Couleurs selon le gagnant
+        bg_a, fg_a = (COLOR_WIN_BG, COLOR_WIN_FG) if a > b else (COLOR_LOSE_BG, COLOR_LOSE_FG)
+        bg_b, fg_b = (COLOR_WIN_BG, COLOR_WIN_FG) if b > a else (COLOR_LOSE_BG, COLOR_LOSE_FG)
 
-        # Boîte équipe A
-        draw.rectangle([x, y_top, x + box_width, y_top + box_height], fill=box_a[0])
+        # Score équipe A
         a_text = str(a)
-        a_size = draw.textbbox((0, 0), a_text, font=font)
-        draw.text(
-            (x + (box_width - (a_size[2] - a_size[0])) / 2,
-             y_top + (box_height - (a_size[3] - a_size[1])) / 2),
-            a_text, fill=box_a[1], font=font
-        )
+        a_width = draw.textlength(a_text, font=font)
+        a_x = x + (box_width - a_width) / 2
+        a_y = y_top + (box_height - ascent) / 2 + OFFSET_Y
+        draw.rectangle([x, y_top, x + box_width, y_top + box_height], fill=bg_a)
+        draw.text((a_x, a_y), a_text, fill=fg_a, font=font)
 
-        # Boîte équipe B
-        draw.rectangle([x, y_bottom, x + box_width, y_bottom + box_height], fill=box_b[0])
+        # Score équipe B
         b_text = str(b)
-        b_size = draw.textbbox((0, 0), b_text, font=font)
-        draw.text(
-            (x + (box_width - (b_size[2] - b_size[0])) / 2,
-             y_bottom + (box_height - (b_size[3] - b_size[1])) / 2),
-            b_text, fill=box_b[1], font=font
-        )
+        b_width = draw.textlength(b_text, font=font)
+        b_x = x + (box_width - b_width) / 2
+        b_y = y_bottom + (box_height - ascent) / 2 + OFFSET_Y
+        draw.rectangle([x, y_bottom, x + box_width, y_bottom + box_height], fill=bg_b)
+        draw.text((b_x, b_y), b_text, fill=fg_b, font=font)
 
     return image
 
@@ -361,8 +372,8 @@ def parse_csv_rows():
     """
     url = "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_calendrier_export_club.php"
     payload = {
-        "cnclub": "0775819",
-        "cal_saison": "2024/2025",
+        "cnclub": club_id,
+        "cal_saison": saison,
         "typ_edition": "E",
         "type": "RES"
     }
@@ -418,6 +429,7 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
     v_place_type = 215*m
     v_sets = 238*m
     v_victory = 238*m
+    v_score = 202*m
 
     draw_centered_text_overlay(background, title, 430*m, 660*m, v_title, fnt_gagalin_40, fill=(192,192,192,255), stroke_width=2, stroke_fill=(84,84,84,255))
 
@@ -463,19 +475,32 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
 
         match mode:
             case "results":
-                
                 result = did_team_a_win(sets)
-                victory_color = "green" if result else "red" if result is False else "yellow"
-                victory_text = "VICTOIRE" if result else "DÉFAITE" if result is False else "INCONNU"
 
+                # Détection du club pour adapter l'affichage du résultat
+                club_a = club.lower() in team_a.lower()
+                club_b = club.lower() in team_b.lower()
+
+                if (result and club_a) or (not result and club_b):
+                    result = True
+                elif (not result and club_a) or (result and club_b):
+                    result = False
+
+                if score:
+                    victory_color = "green" if result else "red" if result is False else "yellow"
+                    victory_text = "VICTOIRE" if result else "DÉFAITE" if result is False else "INCONNU"
+                else:
+                    victory_color = "yellow"
+                                
                 overlay = Image.open(f"_img/objects/banner_result_{victory_color}.png").convert("RGBA")
                 background.paste(overlay, (20*m, v), overlay)
+
             case _: # Default "planning"
                 overlay = Image.open(f"_img/objects/banner_planning.png").convert("RGBA")
                 background.paste(overlay, (20*m, v), overlay)
 
         # Debug console
-        print(f"{format} | {date_full} - {entity} - {match} - {category} - {team_a} - {team_b} - {sets} - {score} - {place} | {victory_color}")
+        print(f"{format} | {date_full} - {entity} - {match} - {category} - {team_a} - {team_b} - {sets} - {score} - {place}")
 
 
         draw_centered_text_overlay(background, title_entity, 115*m, 95*m, v_entity, fonts["bold_15"], fill=(255,255,255,255), stroke_width=1, stroke_fill=(0,0,0,255))
@@ -490,14 +515,17 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
 
         match mode:
             case "results":
-                if result:
-                    draw_centered_text_overlay(background, victory_text, 200*m, 705*m, v_victory, fonts["victory"], fill=(0,109,57,255))
-                else:
-                    draw_centered_text_overlay(background, victory_text, 200*m, 705*m, v_victory, fonts["victory"], fill=(167,46,59,255))
+                if score:
+                    if result:
+                        draw_centered_text_overlay(background, victory_text, 200*m, 705*m, v_victory, fonts["victory"], fill=(0,109,57,255))
+                    else:
+                        draw_centered_text_overlay(background, victory_text, 200*m, 705*m, v_victory, fonts["victory"], fill=(167,46,59,255))
 
-                sets_formatted = format_sets(sets)
-                draw_centered_text_overlay(background, sets_formatted, 100*m, 828*m, v_sets, fonts["sets"], fill=(10,58,128,255))
+                    sets_formatted = format_sets(sets)
+                    draw_centered_text_overlay(background, sets_formatted, 100*m, 828*m, v_sets, fonts["sets"], fill=(10,58,128,255))
 
+                    score_img = create_score_image(score)
+                    background.paste(score_img, (876*m, v_score))
 
             case _: # Default "planning"
                 draw_centered_text_overlay(background, date_full, 100*m, 705*m, v_date, fonts["bold_15"], fill=(255,255,255,255))
@@ -530,6 +558,7 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         v_place_type += v_delta
         v_sets += v_delta
         v_victory += v_delta
+        v_score += v_delta
 
     return background
 
