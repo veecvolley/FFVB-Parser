@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>VEEC - Comm' Generator</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container-flex">
+        <div class="form-card">
+            <div style="display: flex; align-items: center; margin-bottom: 0.7em;">
+                <img src="/static/logo.png" id="mainLogo" class="main-logo" alt="Logo">
+                <h1>Comm' Generator</h1>
+            </div>
+            <form id="filterForm">
+                <div class="row">
+                    <label for="custom_title">Titre :</label><br>
+                    <input type="text" id="custom_title" name="custom_title" style="width:100%;" placeholder="Ex: Week-end de Matchs !!">
+                </div>
+                <div class="row">
+                    <label>Format :</label><br>
+                    <label><input type="radio" name="format" value="pub" checked> Publication</label>
+                    <label style="margin-left:1.2em;"><input type="radio" name="format" value="story"> Story</label>
+                </div>
+                <div class="row">
+                    <label for="categories">Catégories :</label><br>
+                    <select id="categories" name="categories" multiple size="3" style="width:100%;"></select>
+                </div>
+                <div class="row dates-row">
+                    <div class="date-col">
+                        <label for="date_start">Date début :</label>
+                        <input type="date" id="date_start" name="date_start">
+                    </div>
+                    <div class="date-col">
+                        <label for="date_end">Date fin :</label>
+                        <input type="date" id="date_end" name="date_end">
+                    </div>
+                </div>
+                <div class="row">
+                    <button type="submit">Générer l'image</button>
+                    <span id="loading">⏳ Génération...</span>
+                </div>
+            </form>
+        </div>
+        <div class="image-holder">
+            <img id="resultImg" src="" alt="Image générée">
+        </div>
+        <div id="versionInfo">Version : {{ version }}</div>
+    </div>
+
+    <div id="imgModal" style="display:none;">
+        <span id="imgModalClose">&times;</span>
+        <img id="imgModalContent" src="" alt="Agrandissement" />
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

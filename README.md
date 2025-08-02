@@ -5,7 +5,7 @@
 FFVB-Parser is a tool for parsing scores and data provided by the FFVB website (https://www.ffvb.org / https://www.ffvbbeach.org/ffvbapp/).
 The aim is to be able to dynamically generate regular graphical tables of the scores of the selected club.
 
-![Comm'Generator Screenshot](_img/screenshot.png)
+![Comm'Generator Screenshot](screenshot.png)
 
 ---
 ## Features
