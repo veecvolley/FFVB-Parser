@@ -171,3 +171,7 @@ button:hover {
     .form-card { min-width: 0; }
     .image-holder { min-width: 0; }
 }
+#mode_select {
+    font-size: 0.85em;
+    padding: 0.35em;
+}
