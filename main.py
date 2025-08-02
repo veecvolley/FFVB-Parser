@@ -9,6 +9,12 @@ from datetime import datetime
 
 #== Configuration ======================================================
 
+#saison = "2025/2026"
+saison = "2024/2025"
+
+club = "FS VAL D'EUROPE ESBLY COUPVRAY VB"
+club_id = "0775819"
+
 jours = {"Monday": "Lundi", "Tuesday": "Mardi", "Wednesday": "Mercredi", "Thursday": "Jeudi", "Friday": "Vendredi", "Saturday": "Samedi", "Sunday": "Dimanche"}
 mois = {"January": "janvier", "February": "février", "March": "mars", "April": "avril", "May": "mai", "June": "juin", "July": "juillet", "August": "août", "September": "septembre", "October": "octobre", "November": "novembre", "December": "décembre"}
 entities = {
@@ -69,21 +75,6 @@ def get_gymnase_address(codmatch, codent):
 
                 return {'nom': nom, 'rue': rue, 'code_postal': code_postal, 'ville': ville}
     return None
-
-def fetch_csv_utf8():
-    url = "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_calendrier_export_club.php"
-    payload = {
-        "cnclub": "0775819",
-        "cal_saison": "2025/2026",
-        "typ_edition": "E",
-        "type": "RES"
-    }
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    r = requests.post(url, data=payload, headers=headers)
-    r.raise_for_status()
-    csv_latin1_bytes = r.content  # type: bytes
-    csv_utf8_str = csv_latin1_bytes.decode('latin1').encode('utf-8').decode('utf-8')
-    return io.StringIO(csv_utf8_str)
 
 def paste_image_fit_box(
     background: Image.Image,
@@ -229,28 +220,203 @@ def draw_centered_text_overlay(
 
     return background_img
 
+def format_sets(sets):
+    """
+    Transforme une chaîne de score 'A/B' en 'A - B'.
+
+    Arguments :
+    - sets : str, au format 'A/B'
+
+    Retourne :
+    - str formaté : 'A - B' ou sets d'origine si invalide
+    """
+    if not sets or '/' not in sets:
+        return sets
+
+    parts = sets.strip().split('/')
+    if len(parts) == 2 and all(part.strip().isdigit() for part in parts):
+        a, b = int(parts[0]), int(parts[1])
+        return f"{a} - {b}"
+    return sets
+
+def did_team_a_win(sets):
+    """
+    Détermine si l'équipe A a gagné à partir d'un score 'A/B'.
+
+    Arguments :
+    - sets : str, au format 'A/B'
+
+    Retourne :
+    - True si A > B, False si A < B, None si égalité ou invalide
+    """
+    if not sets or '/' not in sets:
+        return None
+
+    parts = sets.strip().split('/')
+    if len(parts) == 2 and all(part.strip().isdigit() for part in parts):
+        a, b = int(parts[0]), int(parts[1])
+        if a == b:
+            return None
+        return a > b
+    return None
+
+def create_score_image(score):
+    """
+    Génère une image représentant un score de match de volley :
+    - chaque set affiché verticalement (équipe A en haut, B en bas)
+    - fond gagnant / perdant et texte configurables en RGB
+    - taille de police configurable
+
+    Argument :
+    - score : str, format '26-24,19-25,...'
+
+    Retourne :
+    - image PIL.Image
+    """
+
+    # === Paramètres ===
+    FONT_SIZE = 40
+    OFFSET_Y = -5
+
+    COLOR_WIN_BG = (253, 197, 5)
+    COLOR_WIN_FG = (87, 87, 87)
+    COLOR_LOSE_BG = (38, 38, 38)
+    COLOR_LOSE_FG = (255, 255, 255)
+
+    sets = []
+    for s in score.split(','):
+        try:
+            a, b = map(int, s.strip().split('-'))
+            sets.append([a, b])
+        except ValueError:
+            continue
+
+    # Dimensions
+    set_count = len(sets)
+    box_width, box_height = 61, 61
+    padding, spacing = 6, 6
+    width = set_count * (box_width + spacing) + padding * 2 - spacing
+    height = box_height * 2 + padding * 3
+
+    image = Image.new("RGB", (width, height), "white")
+    draw = ImageDraw.Draw(image)
+
+    font = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", FONT_SIZE)
+
+    ascent, descent = font.getmetrics()
+
+    for i, (a, b) in enumerate(sets):
+        x = padding + i * (box_width + spacing)
+        y_top = padding
+        y_bottom = y_top + box_height + padding
+
+        # Couleurs selon le gagnant
+        bg_a, fg_a = (COLOR_WIN_BG, COLOR_WIN_FG) if a > b else (COLOR_LOSE_BG, COLOR_LOSE_FG)
+        bg_b, fg_b = (COLOR_WIN_BG, COLOR_WIN_FG) if b > a else (COLOR_LOSE_BG, COLOR_LOSE_FG)
+
+        # Score équipe A
+        a_text = str(a)
+        a_width = draw.textlength(a_text, font=font)
+        a_x = x + (box_width - a_width) / 2
+        a_y = y_top + (box_height - ascent) / 2 + OFFSET_Y
+        draw.rectangle([x, y_top, x + box_width, y_top + box_height], fill=bg_a)
+        draw.text((a_x, a_y), a_text, fill=fg_a, font=font)
+
+        # Score équipe B
+        b_text = str(b)
+        b_width = draw.textlength(b_text, font=font)
+        b_x = x + (box_width - b_width) / 2
+        b_y = y_bottom + (box_height - ascent) / 2 + OFFSET_Y
+        draw.rectangle([x, y_bottom, x + box_width, y_bottom + box_height], fill=bg_b)
+        draw.text((b_x, b_y), b_text, fill=fg_b, font=font)
+
+    return image
+
 #== Main ===============================================================
-def generate_filtered_image(categories_filter=None, date_start=None, date_end=None, title=None, format="pub"):
+#== FACTORISATION COMMUNE ==================================================
+
+def setup_graphics(format="pub", multiplier=2):
     """
-    categories_filter: liste de codes catégorie (ex ["RMC", "PVA", ...]) ou None (toutes)
-    date_start/date_end: string format "YYYY-MM-DD" ou None (pas de borne)
+    Initialise les polices et le fond en fonction du format (story/publication).
+
+    Arguments :
+    - format : str, "pub" ou "story"
+    - multiplier : facteur d'échelle pour les tailles (par défaut 2)
+
+    Retourne :
+    - m : facteur utilisé pour la mise à l'échelle
+    - fonts : dictionnaire de polices chargées
+    - background : image PIL ouverte et convertie
     """
+    m = multiplier
+    fonts = {
+        "main": ImageFont.truetype("_font/DejaVuSans.ttf", size=50*m),
+        "bold_10": ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=10*m),
+        "bold_12": ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=12*m),
+        "bold_13": ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=13*m),
+        "bold_14": ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=14*m),
+        "bold_15": ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=15*m),
+        "title": ImageFont.truetype("_font/Gagalin-Regular.ttf", size=40*m),
+        "sets": ImageFont.truetype("_font/Coiny-Regular.ttf", size=30*m),
+        "victory": ImageFont.truetype("_font/Coiny-Regular.ttf", size=25*m),
+    }
+    background = Image.open(f"_img/objects/background_{format}.png").convert("RGBA")
+    return m, fonts, background
 
-    # multiplicateur
-    m = 2
+def parse_csv_rows():
+    """
+    Récupère et parse le fichier CSV depuis la FFVB.
 
-    # get a font
-    fnt = ImageFont.truetype("_font/DejaVuSans.ttf", size=50*m)
-    fnt_bold_10 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=10*m)
-    fnt_bold_12 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=12*m)
-    fnt_bold_13 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=13*m)
-    fnt_bold_14 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=14*m)
-    fnt_bold_15 = ImageFont.truetype("_font/OpenSans-ExtraBold.ttf", size=15*m)
-    fnt_gagalin_40 = ImageFont.truetype("_font/Gagalin-Regular.ttf", size=40*m)
+    Retourne :
+    - itérateur CSV
+    """
+    url = "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_calendrier_export_club.php"
+    payload = {
+        "cnclub": club_id,
+        "cal_saison": saison,
+        "typ_edition": "E",
+        "type": "RES"
+    }
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    r = requests.post(url, data=payload, headers=headers)
+    r.raise_for_status()
+    csv_latin1_bytes = r.content  # type: bytes
+    csv_utf8_str = csv_latin1_bytes.decode('latin1').encode('utf-8').decode('utf-8')
 
-    background = Image.open("_img/objects/background_"+ format +".png").convert("RGBA")
+    csvfile = io.StringIO(csv_utf8_str)
+    return csv.reader(csvfile, delimiter=";", quotechar='"')
 
+def parse_local_csv_rows():
+    """
+    Charge et parse un fichier CSV local (UTF-8) pour le traitement des matchs.
 
+    Ce remplacement évite l'appel réseau à la FFVB en mode hors-ligne.
+    Le chemin est fixé à 'data/export.csv', mais peut être modifié.
+
+    Retourne :
+    - itérateur CSV
+    """
+    with open("export20242025_utf8.csv", newline="", encoding="utf-8") as csvfile:
+        return csv.reader(csvfile, delimiter=";", quotechar='"')
+
+#== IMAGE - PLANNING =======================================================
+
+def generate_filtered_image(categories_filter=None, date_start=None, date_end=None, title=None, format="pub", mode="planning"):
+    """
+    Génère une image affichant le planning des matchs à venir selon les filtres donnés.
+
+    Arguments :
+    - categories_filter : liste de codes de catégories à inclure (ex: ["RMC", "PVA"])
+    - date_start / date_end : bornes de dates (format YYYY-MM-DD)
+    - title : titre personnalisé affiché en haut de l'image
+    - format : "pub" ou "story" (détermine le fond et les dimensions)
+
+    Retourne : image PIL
+    """
+    m, fonts, background = setup_graphics(format)
+    fnt_gagalin_40 = fonts["title"]
+
+    # Constantes de placement vertical
     v = 200*m
     v_title = 50*m
     v_entity = 225*m
@@ -261,93 +427,126 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
     v_date = 235*m
     v_place = 213*m
     v_place_type = 215*m
+    v_sets = 238*m
+    v_victory = 238*m
+    v_score = 202*m
 
-    # -- Parsing dates limites --
+    draw_centered_text_overlay(background, title, 430*m, 660*m, v_title, fnt_gagalin_40, fill=(192,192,192,255), stroke_width=2, stroke_fill=(84,84,84,255))
+
+    # Parsing des dates limites
     date_start_dt = datetime.strptime(date_start, "%Y-%m-%d") if date_start else None
     date_end_dt = datetime.strptime(date_end, "%Y-%m-%d") if date_end else None
 
-    # with open('export20252026_utf8.csv', newline='') as csvfile:
-    #     reader = csv.reader(csvfile, delimiter=";", quotechar='"')
-    csvfile = fetch_csv_utf8()
-    reader = csv.reader(csvfile, delimiter=";", quotechar='"')
+    reader = parse_csv_rows()
 
     for row in reader:
-
         entity = row[0]
         match = row[2]
+        date = row[3]
         hour = "" if row[4] == "00:00" else row[4]
         logo_a = row[5]
         team_a = row[6]
         logo_b = row[7]
         team_b = row[8]
+        sets = row[9]
+        score = row[10]
         place = row[12]
-        date = row[3]
+        
 
         if date == 'Date':
             continue
-        
+
         dt = datetime.strptime(date, "%Y-%m-%d")
-        date_full = f"{jours[dt.strftime('%A')]} {dt.day} {mois[dt.strftime('%B')]} {hour}"
-
-        # ==== FILTRAGE PAR CATÉGORIE ====
-        cat_code = match[:3]
-        if categories_filter is not None:
-            if cat_code not in categories_filter:
-                continue
-
-        # ==== FILTRAGE PAR DATE ====
         if date_start_dt and dt < date_start_dt:
             continue
         if date_end_dt and dt > date_end_dt:
+            continue
+
+        cat_code = match[:3]
+        if categories_filter and cat_code not in categories_filter:
             continue
 
         if entity not in entities_str:
             continue
 
         title_entity = entities.get(entity, "null")
-        category = categories.get(match[:3], "null")
+        category = categories.get(cat_code, "null")
+        date_full = f"{jours[dt.strftime('%A')]} {dt.day} {mois[dt.strftime('%B')]} {hour}"
 
-        print(format + " | " + date_full + " - " + entity + " - " + match + " - " + category + " - " + team_a + " - " + team_b + " - " + place)
+        match mode:
+            case "results":
+                result = did_team_a_win(sets)
 
-        overlay = Image.open("_img/objects/bande_0"+ str(m) +".png").convert("RGBA")
-        background.paste(overlay, (20*m, v), overlay)
+                # Détection du club pour adapter l'affichage du résultat
+                club_a = club.lower() in team_a.lower()
+                club_b = club.lower() in team_b.lower()
 
-        draw_centered_text_overlay(background, title, 425*m, 660*m, v_title, fnt_gagalin_40, fill=(192, 192, 192, 255), stroke_width=2, stroke_fill=(84, 84, 84, 255))
+                if (result and club_a) or (not result and club_b):
+                    result = True
+                elif (not result and club_a) or (result and club_b):
+                    result = False
 
-        draw_centered_text_overlay(background, title_entity, 115*m, 95*m, v_entity, fnt_bold_15, fill=(255, 255, 255, 255), stroke_width=1, stroke_fill=(0, 0, 0, 255))
+                if score:
+                    victory_color = "green" if result else "red" if result is False else "yellow"
+                    victory_text = "VICTOIRE" if result else "DÉFAITE" if result is False else "INCONNU"
+                else:
+                    victory_color = "yellow"
+                                
+                overlay = Image.open(f"_img/objects/banner_result_{victory_color}.png").convert("RGBA")
+                background.paste(overlay, (20*m, v), overlay)
 
-        draw_centered_text_overlay(background, category, 115*m, 95*m, v_category, fnt_bold_15, fill=(255, 255, 255, 255), stroke_width=1, stroke_fill=(0, 0, 0, 255))
+            case _: # Default "planning"
+                overlay = Image.open(f"_img/objects/banner_planning.png").convert("RGBA")
+                background.paste(overlay, (20*m, v), overlay)
 
-        background = paste_image_fit_box(background, "_img/clubs/" + logo_a + ".png", 170*m, v_logo, 65*m, 65*m)
+        # Debug console
+        print(f"{format} | {date_full} - {entity} - {match} - {category} - {team_a} - {team_b} - {sets} - {score} - {place}")
 
-        draw_centered_text_overlay(background, team_a, 120*m, 310*m, v_team, fnt_bold_13, fill=(0, 0, 0, 255))
 
-        background = paste_image_fit_box(background, "_img/clubs/" + logo_b + ".png", 425*m, v_logo, 65*m, 65*m)
+        draw_centered_text_overlay(background, title_entity, 115*m, 95*m, v_entity, fonts["bold_15"], fill=(255,255,255,255), stroke_width=1, stroke_fill=(0,0,0,255))
+        draw_centered_text_overlay(background, category, 115*m, 95*m, v_category, fonts["bold_15"], fill=(255,255,255,255), stroke_width=1, stroke_fill=(0,0,0,255))
 
-        draw_centered_text_overlay(background, team_b, 120*m, 560*m, v_team, fnt_bold_13, fill=(0, 0, 0, 255))
+        background = paste_image_fit_box(background, f"_img/clubs/{logo_a}.png", 170*m, v_logo, 65*m, 65*m)
+        draw_centered_text_overlay(background, team_a, 120*m, 310*m, v_team, fonts["bold_13"], fill=(0,0,0,255))
 
-        draw_centered_text_overlay(background, date_full, 100*m, 705*m, v_date, fnt_bold_15, fill=(255, 255, 255, 255))
+        background = paste_image_fit_box(background, f"_img/clubs/{logo_b}.png", 425*m, v_logo, 65*m, 65*m)
+        draw_centered_text_overlay(background, team_b, 120*m, 560*m, v_team, fonts["bold_13"], fill=(0,0,0,255))
 
-        result = get_gymnase_address(match, entity)
-        if result:
-            place_nom = result["nom"]
-            place_adr = result["rue"]
-            place_ville= result["ville"]
-        else:
-            place_adr = "Adresse non trouvée"
 
-        draw_centered_text_overlay(background, place_nom, 210*m, 882*m, v_place, fnt_bold_14, fill=(255, 255, 255, 255), stroke_width=1, stroke_fill=(0, 0, 0, 255))
-        draw_centered_text_overlay(background, place_adr, 210*m, 882*m, v_place + 40, fnt_bold_12, fill=(255, 255, 255, 255), stroke_width=1, stroke_fill=(0, 0, 0, 255))
-        draw_centered_text_overlay(background, place_ville, 210*m, 882*m, v_place + 80, fnt_bold_15, fill=(255, 255, 255, 255), stroke_width=1, stroke_fill=(0, 0, 0, 255))
+        match mode:
+            case "results":
+                if score:
+                    if result:
+                        draw_centered_text_overlay(background, victory_text, 200*m, 705*m, v_victory, fonts["victory"], fill=(0,109,57,255))
+                    else:
+                        draw_centered_text_overlay(background, victory_text, 200*m, 705*m, v_victory, fonts["victory"], fill=(167,46,59,255))
 
-        if place == 'GYMNASE DAVID DOUILLET' or place == 'DAVID DOUILLET' or place == 'PARC DES SPORTS' or place == 'ESPACE JEAN JACQUES LITZLER':
-            place_type = "dom"
-        else:
-            place_type = "ext"
+                    sets_formatted = format_sets(sets)
+                    draw_centered_text_overlay(background, sets_formatted, 100*m, 828*m, v_sets, fonts["sets"], fill=(10,58,128,255))
 
-        overlay = Image.open("_img/objects/" + place_type + ".png").convert("RGBA")
-        overlay = overlay.resize((40*m, 40*m))
-        background.paste(overlay, (995*m, v_place_type), overlay)
+                    score_img = create_score_image(score)
+                    background.paste(score_img, (876*m, v_score))
+
+            case _: # Default "planning"
+                draw_centered_text_overlay(background, date_full, 100*m, 705*m, v_date, fonts["bold_15"], fill=(255,255,255,255))
+
+                result = get_gymnase_address(match, entity)
+                if result:
+                    place_nom = result["nom"]
+                    place_adr = result["rue"]
+                    place_ville = result["ville"]
+                else:
+                    place_adr = "Adresse non trouvée"
+                    place_nom = ""
+                    place_ville = ""
+
+                draw_centered_text_overlay(background, place_nom, 210*m, 882*m, v_place, fonts["bold_14"], fill=(255,255,255,255), stroke_width=1, stroke_fill=(0,0,0,255))
+                draw_centered_text_overlay(background, place_adr, 210*m, 882*m, v_place + 40, fonts["bold_12"], fill=(255,255,255,255), stroke_width=1, stroke_fill=(0,0,0,255))
+                draw_centered_text_overlay(background, place_ville, 210*m, 882*m, v_place + 80, fonts["bold_15"], fill=(255,255,255,255), stroke_width=1, stroke_fill=(0,0,0,255))
+
+                place_type = "dom" if place in ['GYMNASE DAVID DOUILLET', 'DAVID DOUILLET', 'PARC DES SPORTS', 'ESPACE JEAN JACQUES LITZLER'] else "ext"
+                overlay = Image.open(f"_img/objects/{place_type}.png").convert("RGBA").resize((40*m, 40*m))
+                background.paste(overlay, (995*m, v_place_type), overlay)
 
         v += v_delta
         v_entity += v_delta
@@ -357,4 +556,8 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         v_date += v_delta
         v_place += v_delta
         v_place_type += v_delta
+        v_sets += v_delta
+        v_victory += v_delta
+        v_score += v_delta
+
     return background

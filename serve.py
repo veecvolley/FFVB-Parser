@@ -11,7 +11,9 @@ from main import generate_filtered_image
 
 CATEGORIES = {
     "1MB": "SM1 - Masculin",
-    "2FC": "SF1 - Féminin"
+    "2FC": "SF1 - Féminin",
+    "ACJ": "ACJ - Jeunes",
+    "RMC": "SM1 - Masculin OLD",
 }
 
 VERSION = open("VERSION.md", encoding="utf-8").readline().strip()
@@ -30,13 +32,16 @@ def categories():
 
 @app.get("/image")
 def image(
+    mode: Optional[str] = "planning",  # "planning" or "results"
     title: Optional[str] = None,
     format: Optional[str] = "pub",
     categories: Optional[List[str]] = Query(None),
     date_start: Optional[str] = None,
     date_end: Optional[str] = None
 ):
-    img = generate_filtered_image(categories, date_start, date_end, title, format)
+   
+    img = generate_filtered_image(categories, date_start, date_end, title, format, mode)
+
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     buf.seek(0)
