@@ -1,0 +1,30 @@
+ffvb:
+  csv_url: "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_calendrier_export_club.php"
+  address_pdf_url: "https://www.ffvbbeach.org/ffvbapp/adressier/fiche_match_ffvb.php"
+
+club:
+  name: "FS VAL D'EUROPE ESBLY COUPVRAY VB"
+  id: "0775819"
+  #saison: "2024/2025"
+  saison: "2025/2026"
+
+championnat:
+  entities:
+    LIIDF: "Championnat Régional"
+    ADPVA: "Championnat de France"
+    PTIDF77: "Championnat Départemental"
+
+  categories:
+    PVA: "Volley-Assis"
+    RMC: "Masculin"
+    RFD: "Féminin"
+    1MB: "Masculin"
+    2FC: "Féminin"
+    ARA: "Masculin"
+    ARF: "Féminin"
+
+  labels:
+    1MB: "SM1 - Masculin"
+    2FC: "SF1 - Féminin"
+    ACJ: "ACJ - Jeunes"
+    RMC: "SM1 - Masculin OLD"

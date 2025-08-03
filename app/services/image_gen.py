@@ -1,0 +1,156 @@
+from datetime import datetime
+from pathlib import Path
+from PIL import Image, ImageFont
+from app.core.constants import jours, mois
+from app.services.image_utils import paste_image_fit_box, draw_centered_text_overlay
+from app.services.score_utils import did_team_a_win, format_sets, create_score_image
+from app.services.data_provider import parse_csv_rows, get_gymnase_address
+from app.core.config import settings
+
+BASE_PATH = Path(__file__).resolve().parent.parent  # == app/
+ASSETS_DIR = BASE_PATH / "assets"
+FONTS_DIR = ASSETS_DIR / "fonts"
+CLUBS_DIR = ASSETS_DIR / "clubs"
+ICONS_DIR = ASSETS_DIR / "icons"
+BACKGROUNDS_DIR = ASSETS_DIR / "backgrounds"
+BANNERS_DIR = ASSETS_DIR / "banners"
+
+def setup_graphics(format="pub", multiplier=2):
+    m = multiplier
+    fonts = {
+        "main": ImageFont.truetype(FONTS_DIR / "DejaVuSans.ttf", size=50*m),
+        "bold_10": ImageFont.truetype(FONTS_DIR / "OpenSans-ExtraBold.ttf", size=10*m),
+        "bold_12": ImageFont.truetype(FONTS_DIR / "OpenSans-ExtraBold.ttf", size=12*m),
+        "bold_13": ImageFont.truetype(FONTS_DIR / "OpenSans-ExtraBold.ttf", size=13*m),
+        "bold_14": ImageFont.truetype(FONTS_DIR / "OpenSans-ExtraBold.ttf", size=14*m),
+        "bold_15": ImageFont.truetype(FONTS_DIR / "OpenSans-ExtraBold.ttf", size=15*m),
+        "title": ImageFont.truetype(FONTS_DIR / "Gagalin-Regular.ttf", size=40*m),
+        "sets": ImageFont.truetype(FONTS_DIR / "Coiny-Regular.ttf", size=30*m),
+        "victory": ImageFont.truetype(FONTS_DIR / "Coiny-Regular.ttf", size=25*m),
+    }
+    background = Image.open(BACKGROUNDS_DIR / f"{format}.png").convert("RGBA")
+    return m, fonts, background
+
+def generate_filtered_image(categories_filter=None, date_start=None, date_end=None, title=None, format="pub", mode="planning"):
+    m, fonts, background = setup_graphics(format)
+    fnt_gagalin_40 = fonts["title"]
+
+    # Offsets
+    v = 200*m
+    v_title = 50*m
+    v_entity = 225*m
+    v_category = 255*m
+    v_delta = 80*m
+    v_logo = 205*m
+    v_team = 235*m
+    v_date = 235*m
+    v_place = 213*m
+    v_place_type = 215*m
+    v_sets = 238*m
+    v_victory = 238*m
+    v_score = 202*m
+
+    print(f"{settings.saison}")
+
+    draw_centered_text_overlay(background, title, 430*m, 660*m, v_title, fnt_gagalin_40,
+                                fill=(192,192,192,255), stroke_width=2, stroke_fill=(84,84,84,255))
+
+    date_start_dt = datetime.strptime(date_start, "%Y-%m-%d") if date_start else None
+    date_end_dt = datetime.strptime(date_end, "%Y-%m-%d") if date_end else None
+
+    reader = parse_csv_rows()
+
+    for row in reader:
+        entity, match, date = row[0], row[2], row[3]
+        hour = "" if row[4] == "00:00" else row[4]
+        logo_a, team_a, logo_b, team_b = row[5], row[6], row[7], row[8]
+        sets, score = row[9], row[10]
+        place = row[12]
+
+        if date == 'Date':
+            continue
+
+        dt = datetime.strptime(date, "%Y-%m-%d")
+        if date_start_dt and dt < date_start_dt: continue
+        if date_end_dt and dt > date_end_dt: continue
+        cat_code = match[:3]
+        if categories_filter and cat_code not in categories_filter: continue
+        entities_str = list(settings.entities.keys())
+        if entity not in entities_str: continue
+
+        title_entity = settings.entities.get(entity, "null")
+        category = settings.categories.get(cat_code, "null")
+        date_full = f"{jours[dt.strftime('%A')]} {dt.day} {mois[dt.strftime('%B')]} {hour}"
+
+        if mode == "results":
+            result = did_team_a_win(sets)
+            club_a = settings.club.lower() in team_a.lower()
+            club_b = settings.club.lower() in team_b.lower()
+
+            if (result and club_a) or (not result and club_b):
+                result = True
+            elif (not result and club_a) or (result and club_b):
+                result = False
+
+            if score:
+                victory_color = "green" if result else "red" if result is False else "yellow"
+                victory_text = "VICTOIRE" if result else "DÉFAITE" if result is False else "INCONNU"
+            else:
+                victory_color = "yellow"
+
+            overlay = Image.open(BANNERS_DIR / f"result_{victory_color}.png").convert("RGBA")
+            background.paste(overlay, (20*m, v), overlay)
+        else:
+            overlay = Image.open(BANNERS_DIR / "planning.png").convert("RGBA")
+            background.paste(overlay, (20*m, v), overlay)
+
+        # Debug console
+        print(f"{format} | {date_full} - {entity} - {match} - {category} - {team_a} - {team_b} - {sets} - {score} - {place}")
+
+        draw_centered_text_overlay(background, title_entity, 115*m, 95*m, v_entity, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
+        draw_centered_text_overlay(background, category, 115*m, 95*m, v_category, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
+
+        background = paste_image_fit_box(background, CLUBS_DIR / f"{logo_a}.png", 170*m, v_logo, 65*m, 65*m)
+        draw_centered_text_overlay(background, team_a, 120*m, 310*m, v_team, fonts["bold_13"], fill=(0,0,0,255))
+
+        background = paste_image_fit_box(background, CLUBS_DIR / f"{logo_b}.png", 425*m, v_logo, 65*m, 65*m)
+        draw_centered_text_overlay(background, team_b, 120*m, 560*m, v_team, fonts["bold_13"], fill=(0,0,0,255))
+
+        if mode == "results" and score:
+            color = (0,109,57,255) if result else (167,46,59,255)
+            draw_centered_text_overlay(background, victory_text, 200*m, 705*m, v_victory, fonts["victory"], fill=color)
+
+            sets_formatted = format_sets(sets)
+            draw_centered_text_overlay(background, sets_formatted, 100*m, 828*m, v_sets, fonts["sets"], fill=(10,58,128,255))
+
+            score_img = create_score_image(score)
+            background.paste(score_img, (876*m, v_score))
+        elif mode == "planning":
+            draw_centered_text_overlay(background, date_full, 100*m, 705*m, v_date, fonts["bold_15"])
+            result = get_gymnase_address(match, entity)
+            place_nom = result["nom"] if result else ""
+            place_adr = result["rue"] if result else "Adresse non trouvée"
+            place_ville = result["ville"] if result else ""
+
+            draw_centered_text_overlay(background, place_nom, 210*m, 882*m, v_place, fonts["bold_14"], stroke_width=1, stroke_fill=(0,0,0,255))
+            draw_centered_text_overlay(background, place_adr, 210*m, 882*m, v_place + 40, fonts["bold_12"], stroke_width=1, stroke_fill=(0,0,0,255))
+            draw_centered_text_overlay(background, place_ville, 210*m, 882*m, v_place + 80, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
+
+            place_type = "int" if place in ['GYMNASE DAVID DOUILLET', 'DAVID DOUILLET', 'PARC DES SPORTS', 'ESPACE JEAN JACQUES LITZLER'] else "ext"
+            overlay = Image.open(ICONS_DIR / f"{place_type}.png").convert("RGBA").resize((40*m, 40*m))
+            background.paste(overlay, (995*m, v_place_type), overlay)
+
+        # Décalage vertical
+        v += v_delta
+        v_entity += v_delta
+        v_category += v_delta
+        v_logo += v_delta
+        v_team += v_delta
+        v_date += v_delta
+        v_place += v_delta
+        v_place_type += v_delta
+        v_sets += v_delta
+        v_victory += v_delta
+        v_score += v_delta
+
+    return background
