@@ -2,7 +2,7 @@ FROM python:3.13-alpine
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    USER=veecvolley \
+    USER=app \
     MPLCONFIGDIR=/tmp
 
 RUN apk add --no-cache \
@@ -26,4 +26,4 @@ USER ${USER}
 
 EXPOSE 8000
 ENTRYPOINT ["uvicorn"]
-CMD ["serve:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app"]
+CMD ["run:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app"]

@@ -4,3 +4,5 @@ uvicorn
 requests
 pdfplumber
 jinja2
+pyyaml
+httpx
