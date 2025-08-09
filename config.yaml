@@ -16,7 +16,10 @@ championnat:
   entities:
     LIIDF: "Championnat Régional"
     ADPVA: "Championnat de France"
-    PTIDF77: "Championnat Départemental"
+    PTIDF77: "Championnat Départemental 77"
+    ACJEUNES: "Championnat Jeunes"
+    AVBEACH: "Championnat Beach-Volley"
+    PTIDF95: "Championnat Départemental 95"
 
   categories:
     PVA: "Volley-Assis"
@@ -32,3 +35,69 @@ championnat:
     2FC: "SF1 - Féminin"
     PVA: "SVA - Volley-Assis (mixte)"
     RMC: "SM1 - Masculin (2024/2025)"
+
+saisons:
+  2024-2025:
+    PVA:
+      type: Volley-Assis
+      niveau: Championnat de France
+      genre: Mixte
+      label: SVA
+      nom: Sénior
+    RMC:
+      type: Volley-Ball
+      niveau: Championnat Régional
+      genre: Masculin
+      label: SM1
+      nom: Sénior
+    ARA:
+      type: Volley-Ball
+      niveau: Championnat Départemental
+      genre: Masculin
+      label: SM2
+      nom: Sénior
+    RFD:
+      type: Volley-Ball
+      niveau: Championnat Régional
+      genre: Feminin
+      label: SF1
+      nom: Sénior
+    ARF:
+      type: Volley-Ball
+      niveau: Championnat Départemental
+      genre: Feminin
+      label: SF2
+      nom: Sénior
+    M6F:
+      type: Volley-Ball
+      niveau: Championnat Départemental
+      genre: Feminin
+      label: M15F
+      nom: Jeunes
+    M6M:
+      type: Volley-Ball
+      niveau: Championnat Départemental
+      genre: Masculin
+      label: M15G
+      nom: Jeunes
+
+  2025-2026:
+    PVA:
+      type: Volley-Assis
+      niveau: Championnat de France
+      genre: Mixte
+      label: SVA
+      nom: Sénior Mixtes
+    1MB:
+      type: Volley-Ball
+      niveau: Championnat Régional
+      genre: Masculin
+      label: SM1
+      nom: Séniors Masculins 1
+    1FC:
+      type: Volley-Ball
+      niveau: Championnat Régional
+      genre: Féminin
+      label: SF1
+      nom: Séniors Féminines 1
+

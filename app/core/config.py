@@ -35,4 +35,16 @@ class Settings:
     def labels(self):
         return self.config["championnat"]["labels"]
 
+
+    def get_category_config(self, saison: str, code: str) -> dict:
+        """
+        Récupère la configuration d'une catégorie pour une saison donnée.
+        Retourne un dict vide si non trouvée.
+        """
+        try:
+            return self.config["saisons"][saison][code]
+        except KeyError:
+            return {}
+
+
 settings = Settings()

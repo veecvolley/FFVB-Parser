@@ -49,12 +49,15 @@ def get_gymnase_address(codmatch, codent):
 
 def parse_csv_rows(saison):
     url = settings.ffvb_csv_url
+    saison = saison.replace("-", "/")
+
     payload = {
         "cnclub": settings.club_id,
         "cal_saison": saison,
         "typ_edition": "E",
         "type": "RES"
     }
+
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
     response = requests.post(url, data=payload, headers=headers)
 
@@ -63,6 +66,7 @@ def parse_csv_rows(saison):
 
     response.raise_for_status()
     csv_utf8_str = response.content.decode('latin1').encode('utf-8').decode('utf-8')
+    
     return csv.reader(io.StringIO(csv_utf8_str), delimiter=";", quotechar='"')
 
 def parse_local_csv_rows():

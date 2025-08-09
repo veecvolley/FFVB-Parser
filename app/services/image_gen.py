@@ -64,6 +64,7 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         logo_a, team_a, logo_b, team_b = row[5], row[6], row[7], row[8]
         sets, score = row[9], row[10]
         place = row[12]
+        cat_code = match[:3]
 
         if date == 'Date':
             continue
@@ -71,13 +72,19 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         dt = datetime.strptime(date, "%Y-%m-%d")
         if date_start_dt and dt < date_start_dt: continue
         if date_end_dt and dt > date_end_dt: continue
-        cat_code = match[:3]
         if categories_filter and cat_code not in categories_filter: continue
         entities_str = list(settings.entities.keys())
         if entity not in entities_str: continue
 
-        title_entity = settings.entities.get(entity, "null")
-        category = settings.categories.get(cat_code, "null")
+        print(f"Cat filt:{categories_filter}")
+        print(f"Cat code:{cat_code}")
+
+        cat_info = settings.get_category_config(saison, cat_code)
+        #title_entity = settings.entities.get(entity, "null")
+        title_entity = cat_info['niveau']
+        #category = settings.categories.get(cat_code, "null")
+        category = cat_info['type']
+
         date_full = f"{jours[dt.strftime('%A')]} {dt.day} {mois[dt.strftime('%B')]} {hour}"
 
         if mode == "results":
@@ -103,7 +110,7 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
             background.paste(overlay, (20*m, v), overlay)
 
         # Debug console
-        print(f"{format} | {date_full} - {entity} - {match} - {category} - {team_a} - {team_b} - {sets} - {score} - {place}")
+        print(f"{format} | {date_full} - {entity} - {match} - {category} - ({logo_a}) {team_a} - ({logo_b}) {team_b} - {sets} - {score} - {place}")
 
         draw_centered_text_overlay(background, title_entity, 115*m, 95*m, v_entity, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
         draw_centered_text_overlay(background, category, 115*m, 95*m, v_category, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
