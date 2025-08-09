@@ -141,3 +141,77 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Lightbox
   setupLightbox();
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("imgModal");
+  const modalImg = document.getElementById("imgModalContent");
+  const closeBtn = document.getElementById("imgModalClose");
+
+  let zoomed = false;
+  let dragging = false;
+  let startX = 0, startY = 0;
+  let baseX = 0, baseY = 0; // offset courant
+
+  function resetView() {
+    zoomed = false;
+    dragging = false;
+    baseX = baseY = 0;
+    modalImg.classList.remove("zoomed");
+    modalImg.style.transform = "translate(0, 0)";
+    modalImg.style.maxWidth = "90%";
+    modalImg.style.maxHeight = "90%";
+  }
+
+  // Toggle zoom au clic
+  modalImg.addEventListener("click", (e) => {
+    if (dragging) return; // éviter déclenchement si on a déplacé
+    zoomed = !zoomed;
+    if (zoomed) {
+      modalImg.classList.add("zoomed");
+      modalImg.style.maxWidth = "50%";
+      modalImg.style.maxHeight = "50%";
+      baseX = baseY = 0;
+      modalImg.style.transform = "translate(0, 0)";
+    } else {
+      resetView();
+    }
+  });
+
+  // Début drag
+  modalImg.addEventListener("mousedown", (e) => {
+    if (!zoomed) return;
+    dragging = true;
+    startX = e.clientX - baseX;
+    startY = e.clientY - baseY;
+  });
+
+  // Fin drag
+  window.addEventListener("mouseup", () => {
+    dragging = false;
+  });
+
+  // Déplacement
+  window.addEventListener("mousemove", (e) => {
+    if (!dragging || !zoomed) return;
+
+    let newX = e.clientX - startX;
+    let newY = e.clientY - startY;
+
+    // On pourrait ici ajouter des limites (clamp) si besoin
+    baseX = newX;
+    baseY = newY;
+    modalImg.style.transform = `translate(${baseX}px, ${baseY}px)`;
+  });
+
+  // Fermeture → reset
+  closeBtn.addEventListener("click", () => {
+    modal.style.display = "none";
+    resetView();
+  });
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.style.display = "none";
+      resetView();
+    }
+  });
+});

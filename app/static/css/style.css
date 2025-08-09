@@ -187,3 +187,17 @@ button:hover {
     font-size: 0.85em;
     padding: 0.35em;
 }
+#imgModal { overflow: hidden; }
+#imgModalContent {
+  transition: transform 0.15s ease;
+  cursor: zoom-in;
+  user-select: none;
+}
+#imgModalContent.zoomed {
+  cursor: grab;
+  max-width: none !important;
+  max-height: none !important;
+}
+#imgModalContent.zoomed:active {
+  cursor: grabbing;
+}
