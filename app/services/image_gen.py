@@ -4,6 +4,7 @@ from PIL import Image, ImageFont
 from app.core.constants import jours, mois
 from app.services.image_utils import paste_image_fit_box, draw_centered_text_overlay
 from app.services.score_utils import did_team_a_win, format_sets, create_score_image
+from app.services.string_utils import _norm
 from app.services.data_provider import parse_csv_rows, get_gymnase_address
 from app.core.config import settings
 
@@ -14,6 +15,7 @@ CLUBS_DIR = ASSETS_DIR / "clubs"
 ICONS_DIR = ASSETS_DIR / "icons"
 BACKGROUNDS_DIR = ASSETS_DIR / "backgrounds"
 BANNERS_DIR = ASSETS_DIR / "banners"
+INDOOR_GYMS = {_norm(n) for n in settings.club_gymnases}
 
 def setup_graphics(format="pub", multiplier=2):
     m = multiplier
@@ -146,7 +148,7 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
             draw_centered_text_overlay(background, place_adr, 210*m, 882*m, v_place + 40, fonts["bold_12"], stroke_width=1, stroke_fill=(0,0,0,255))
             draw_centered_text_overlay(background, place_ville, 210*m, 882*m, v_place + 80, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
 
-            place_type = "int" if place in ['GYMNASE DAVID DOUILLET', 'DAVID DOUILLET', 'PARC DES SPORTS', 'ESPACE JEAN JACQUES LITZLER'] else "ext"
+            place_type = "int" if _norm(place) in INDOOR_GYMS else "ext"
             overlay = Image.open(ICONS_DIR / f"{place_type}.png").convert("RGBA").resize((40*m, 40*m))
             background.paste(overlay, (995*m, v_place_type), overlay)
 

@@ -24,6 +24,10 @@ class Settings:
         return self.config["club"]["id"]
 
     @property
+    def club_gymnases(self):
+        return self.config["club"].get("gymnases", [])
+
+    @property
     def entities(self):
         return self.config["championnat"]["entities"]
 
