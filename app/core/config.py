@@ -7,14 +7,6 @@ class Settings:
         with open(config_path, "r", encoding="utf-8") as f:
             self.config = yaml.safe_load(f)
 
-    # @property
-    # def font_main(self):
-    #     return self.config["image"]["font_main"]
-
-    # @property
-    # def font_size(self):
-    #     return self.config["image"]["font_size"]
-
     @property
     def ffvb_csv_url(self):
         return self.config["ffvb"]["csv_url"]
@@ -24,16 +16,16 @@ class Settings:
         return self.config["ffvb"]["address_pdf_url"]
 
     @property
-    def saison(self):
-        return self.config["club"]["saison"]
-
-    @property
     def club(self):
         return self.config["club"]["name"]
 
     @property
     def club_id(self):
         return self.config["club"]["id"]
+
+    @property
+    def club_gymnases(self):
+        return self.config["club"].get("gymnases", [])
 
     @property
     def entities(self):
@@ -46,5 +38,17 @@ class Settings:
     @property
     def labels(self):
         return self.config["championnat"]["labels"]
+
+
+    def get_season_config(self, saison: str, code: str) -> dict:
+        """
+        Récupère la configuration d'une catégorie pour une saison donnée.
+        Retourne un dict vide si non trouvée.
+        """
+        try:
+            return self.config["saisons"][saison][code]
+        except KeyError:
+            return {}
+
 
 settings = Settings()

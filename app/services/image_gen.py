@@ -4,6 +4,7 @@ from PIL import Image, ImageFont
 from app.core.constants import jours, mois
 from app.services.image_utils import paste_image_fit_box, draw_centered_text_overlay
 from app.services.score_utils import did_team_a_win, format_sets, create_score_image
+from app.services.string_utils import _norm
 from app.services.data_provider import parse_csv_rows, get_gymnase_address
 from app.core.config import settings
 
@@ -14,6 +15,7 @@ CLUBS_DIR = ASSETS_DIR / "clubs"
 ICONS_DIR = ASSETS_DIR / "icons"
 BACKGROUNDS_DIR = ASSETS_DIR / "backgrounds"
 BANNERS_DIR = ASSETS_DIR / "banners"
+INDOOR_GYMS = {_norm(n) for n in settings.club_gymnases}
 
 def setup_graphics(format="pub", multiplier=2):
     m = multiplier
@@ -31,15 +33,16 @@ def setup_graphics(format="pub", multiplier=2):
     background = Image.open(BACKGROUNDS_DIR / f"{format}.png").convert("RGBA")
     return m, fonts, background
 
-def generate_filtered_image(categories_filter=None, date_start=None, date_end=None, title=None, format="pub", mode="planning"):
+def generate_filtered_image(categories_filter=None, date_start=None, date_end=None, title=None, format="pub", mode="planning", saison=None):
     m, fonts, background = setup_graphics(format)
     fnt_gagalin_40 = fonts["title"]
 
     # Offsets
     v = 200*m
     v_title = 50*m
-    v_entity = 225*m
-    v_category = 255*m
+    v_entity = 215*m
+    v_category = 240*m
+    v_team_name = 260*m
     v_delta = 80*m
     v_logo = 205*m
     v_team = 235*m
@@ -50,15 +53,13 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
     v_victory = 238*m
     v_score = 202*m
 
-    print(f"{settings.saison}")
-
     draw_centered_text_overlay(background, title, 430*m, 660*m, v_title, fnt_gagalin_40,
                                 fill=(192,192,192,255), stroke_width=2, stroke_fill=(84,84,84,255))
 
     date_start_dt = datetime.strptime(date_start, "%Y-%m-%d") if date_start else None
     date_end_dt = datetime.strptime(date_end, "%Y-%m-%d") if date_end else None
 
-    reader = parse_csv_rows()
+    reader = parse_csv_rows(saison)
 
     for row in reader:
         entity, match, date = row[0], row[2], row[3]
@@ -66,6 +67,7 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         logo_a, team_a, logo_b, team_b = row[5], row[6], row[7], row[8]
         sets, score = row[9], row[10]
         place = row[12]
+        cat_code = match[:3]
 
         if date == 'Date':
             continue
@@ -73,13 +75,15 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         dt = datetime.strptime(date, "%Y-%m-%d")
         if date_start_dt and dt < date_start_dt: continue
         if date_end_dt and dt > date_end_dt: continue
-        cat_code = match[:3]
         if categories_filter and cat_code not in categories_filter: continue
         entities_str = list(settings.entities.keys())
         if entity not in entities_str: continue
 
-        title_entity = settings.entities.get(entity, "null")
-        category = settings.categories.get(cat_code, "null")
+        cat_info = settings.get_season_config(saison, cat_code)
+        title_entity = cat_info['niveau']
+        category = cat_info['type']
+        team_name = cat_info['label']
+
         date_full = f"{jours[dt.strftime('%A')]} {dt.day} {mois[dt.strftime('%B')]} {hour}"
 
         if mode == "results":
@@ -105,15 +109,24 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
             background.paste(overlay, (20*m, v), overlay)
 
         # Debug console
-        print(f"{format} | {date_full} - {entity} - {match} - {category} - {team_a} - {team_b} - {sets} - {score} - {place}")
+        print(f"{format} | {cat_code} | {date_full} - {entity} - {match} - {category} - ({logo_a}) {team_a} - ({logo_b}) {team_b} - {sets} - {score} - {place}")
 
         draw_centered_text_overlay(background, title_entity, 115*m, 95*m, v_entity, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
         draw_centered_text_overlay(background, category, 115*m, 95*m, v_category, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
+        draw_centered_text_overlay(background, team_name, 115*m, 95*m, v_team_name, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
 
-        background = paste_image_fit_box(background, CLUBS_DIR / f"{logo_a}.png", 170*m, v_logo, 65*m, 65*m)
+        try:
+            background = paste_image_fit_box(background, CLUBS_DIR / f"{logo_a}.png", 170*m, v_logo, 65*m, 65*m)
+        except FileNotFoundError:
+            background = paste_image_fit_box(background, CLUBS_DIR / "no_logo.png", 170*m, v_logo, 65*m, 65*m)
+
         draw_centered_text_overlay(background, team_a, 120*m, 310*m, v_team, fonts["bold_13"], fill=(0,0,0,255))
 
-        background = paste_image_fit_box(background, CLUBS_DIR / f"{logo_b}.png", 425*m, v_logo, 65*m, 65*m)
+        try:
+            background = paste_image_fit_box(background, CLUBS_DIR / f"{logo_b}.png", 425*m, v_logo, 65*m, 65*m)
+        except FileNotFoundError:
+            background = paste_image_fit_box(background, CLUBS_DIR / "no_logo.png", 425*m, v_logo, 65*m, 65*m)
+
         draw_centered_text_overlay(background, team_b, 120*m, 560*m, v_team, fonts["bold_13"], fill=(0,0,0,255))
 
         if mode == "results" and score:
@@ -136,7 +149,7 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
             draw_centered_text_overlay(background, place_adr, 210*m, 882*m, v_place + 40, fonts["bold_12"], stroke_width=1, stroke_fill=(0,0,0,255))
             draw_centered_text_overlay(background, place_ville, 210*m, 882*m, v_place + 80, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
 
-            place_type = "int" if place in ['GYMNASE DAVID DOUILLET', 'DAVID DOUILLET', 'PARC DES SPORTS', 'ESPACE JEAN JACQUES LITZLER'] else "ext"
+            place_type = "int" if _norm(place) in INDOOR_GYMS else "ext"
             overlay = Image.open(ICONS_DIR / f"{place_type}.png").convert("RGBA").resize((40*m, 40*m))
             background.paste(overlay, (995*m, v_place_type), overlay)
 
@@ -144,6 +157,7 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         v += v_delta
         v_entity += v_delta
         v_category += v_delta
+        v_team_name += v_delta
         v_logo += v_delta
         v_team += v_delta
         v_date += v_delta

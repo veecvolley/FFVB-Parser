@@ -1,16 +1,26 @@
-
 import requests
+import requests_cache
 import csv
 import io
 import pdfplumber
 import re
 from app.core.config import settings
+from pathlib import Path
+
+CACHE_DIR = Path("/tmp/ffvb_cache")
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+requests_cache.install_cache(str(CACHE_DIR / "http_cache"),expire_after=600)
 
 def get_gymnase_address(codmatch, codent):
     url = settings.ffvb_address_url
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     data = {'codmatch': codmatch, 'codent': codent}
     response = requests.post(url, headers=headers, data=data)
+    
+    if getattr(response, "from_cache", False):
+        print(f"[CACHE] Gymnase PDF {codmatch}/{codent}")
+
     if response.status_code != 200 or response.headers.get('Content-Type') != 'application/pdf':
         print("Erreur lors du téléchargement du PDF.")
         return None
@@ -34,24 +44,35 @@ def get_gymnase_address(codmatch, codent):
                     rue = match_adr.group(1).strip().lower()
                     code_postal = match_adr.group(2)
                     ville = match_adr.group(3).strip()
+
+                    ville = re.sub(r"\s*T[ée]l\.?:.*", "", ville.replace("\\'", "'"), flags=re.I)
+
+                    #print(f"DEBUG: 'nom': {nom}, 'rue': {rue}, 'code_postal': {code_postal}, 'ville': {ville}")
+
                     return {'nom': nom, 'rue': rue, 'code_postal': code_postal, 'ville': ville}
     return None
 
-def parse_csv_rows():
+def parse_csv_rows(saison):
     url = settings.ffvb_csv_url
+    saison = saison.replace("-", "/")
+
     payload = {
         "cnclub": settings.club_id,
-        "cal_saison": settings.saison,
+        "cal_saison": saison,
         "typ_edition": "E",
         "type": "RES"
     }
+
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    r = requests.post(url, data=payload, headers=headers)
-    r.raise_for_status()
-    csv_latin1_bytes = r.content
-    csv_utf8_str = csv_latin1_bytes.decode('latin1').encode('utf-8').decode('utf-8')
-    csvfile = io.StringIO(csv_utf8_str)
-    return csv.reader(csvfile, delimiter=";", quotechar='"')
+    response = requests.post(url, data=payload, headers=headers)
+
+    if getattr(response, "from_cache", False):
+        print("[CACHE] CSV FFVB")
+
+    response.raise_for_status()
+    csv_utf8_str = response.content.decode('latin1').encode('utf-8').decode('utf-8')
+    
+    return csv.reader(io.StringIO(csv_utf8_str), delimiter=";", quotechar='"')
 
 def parse_local_csv_rows():
     with open("export20242025_utf8.csv", newline="", encoding="utf-8") as csvfile:

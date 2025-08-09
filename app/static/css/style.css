@@ -171,7 +171,33 @@ button:hover {
     .form-card { min-width: 0; }
     .image-holder { min-width: 0; }
 }
-#mode_select {
+#mode {
     font-size: 0.85em;
     padding: 0.35em;
+}
+#saison {
+    font-size: 0.85em;
+    padding: 0.35em;
+}
+#categories {
+    font-size: 0.85em;
+    padding: 0.35em;
+}
+#format {
+    font-size: 0.85em;
+    padding: 0.35em;
+}
+#imgModal { overflow: hidden; }
+#imgModalContent {
+  transition: transform 0.15s ease;
+  cursor: zoom-in;
+  user-select: none;
+}
+#imgModalContent.zoomed {
+  cursor: grab;
+  max-width: none !important;
+  max-height: none !important;
+}
+#imgModalContent.zoomed:active {
+  cursor: grabbing;
 }
