@@ -40,8 +40,9 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
     # Offsets
     v = 200*m
     v_title = 50*m
-    v_entity = 225*m
-    v_category = 255*m
+    v_entity = 215*m
+    v_category = 240*m
+    v_team_name = 260*m
     v_delta = 80*m
     v_logo = 205*m
     v_team = 235*m
@@ -79,10 +80,9 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         if entity not in entities_str: continue
 
         cat_info = settings.get_season_config(saison, cat_code)
-        #title_entity = settings.entities.get(entity, "null")
         title_entity = cat_info['niveau']
-        #category = settings.categories.get(cat_code, "null")
         category = cat_info['type']
+        team_name = cat_info['label']
 
         date_full = f"{jours[dt.strftime('%A')]} {dt.day} {mois[dt.strftime('%B')]} {hour}"
 
@@ -109,10 +109,11 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
             background.paste(overlay, (20*m, v), overlay)
 
         # Debug console
-        print(f"{format} | {date_full} - {entity} - {match} - {category} - ({logo_a}) {team_a} - ({logo_b}) {team_b} - {sets} - {score} - {place}")
+        print(f"{format} | {cat_code} | {date_full} - {entity} - {match} - {category} - ({logo_a}) {team_a} - ({logo_b}) {team_b} - {sets} - {score} - {place}")
 
         draw_centered_text_overlay(background, title_entity, 115*m, 95*m, v_entity, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
         draw_centered_text_overlay(background, category, 115*m, 95*m, v_category, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
+        draw_centered_text_overlay(background, team_name, 115*m, 95*m, v_team_name, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
 
         try:
             background = paste_image_fit_box(background, CLUBS_DIR / f"{logo_a}.png", 170*m, v_logo, 65*m, 65*m)
@@ -156,6 +157,7 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         v += v_delta
         v_entity += v_delta
         v_category += v_delta
+        v_team_name += v_delta
         v_logo += v_delta
         v_team += v_delta
         v_date += v_delta
