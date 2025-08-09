@@ -31,7 +31,7 @@ def setup_graphics(format="pub", multiplier=2):
     background = Image.open(BACKGROUNDS_DIR / f"{format}.png").convert("RGBA")
     return m, fonts, background
 
-def generate_filtered_image(categories_filter=None, date_start=None, date_end=None, title=None, format="pub", mode="planning"):
+def generate_filtered_image(categories_filter=None, date_start=None, date_end=None, title=None, format="pub", mode="planning", saison=None):
     m, fonts, background = setup_graphics(format)
     fnt_gagalin_40 = fonts["title"]
 
@@ -50,15 +50,13 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
     v_victory = 238*m
     v_score = 202*m
 
-    print(f"{settings.saison}")
-
     draw_centered_text_overlay(background, title, 430*m, 660*m, v_title, fnt_gagalin_40,
                                 fill=(192,192,192,255), stroke_width=2, stroke_fill=(84,84,84,255))
 
     date_start_dt = datetime.strptime(date_start, "%Y-%m-%d") if date_start else None
     date_end_dt = datetime.strptime(date_end, "%Y-%m-%d") if date_end else None
 
-    reader = parse_csv_rows()
+    reader = parse_csv_rows(saison)
 
     for row in reader:
         entity, match, date = row[0], row[2], row[3]
@@ -110,10 +108,18 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         draw_centered_text_overlay(background, title_entity, 115*m, 95*m, v_entity, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
         draw_centered_text_overlay(background, category, 115*m, 95*m, v_category, fonts["bold_15"], stroke_width=1, stroke_fill=(0,0,0,255))
 
-        background = paste_image_fit_box(background, CLUBS_DIR / f"{logo_a}.png", 170*m, v_logo, 65*m, 65*m)
+        try:
+            background = paste_image_fit_box(background, CLUBS_DIR / f"{logo_a}.png", 170*m, v_logo, 65*m, 65*m)
+        except FileNotFoundError:
+            background = paste_image_fit_box(background, CLUBS_DIR / "no_logo.png", 170*m, v_logo, 65*m, 65*m)
+
         draw_centered_text_overlay(background, team_a, 120*m, 310*m, v_team, fonts["bold_13"], fill=(0,0,0,255))
 
-        background = paste_image_fit_box(background, CLUBS_DIR / f"{logo_b}.png", 425*m, v_logo, 65*m, 65*m)
+        try:
+            background = paste_image_fit_box(background, CLUBS_DIR / f"{logo_b}.png", 425*m, v_logo, 65*m, 65*m)
+        except FileNotFoundError:
+            background = paste_image_fit_box(background, CLUBS_DIR / "no_logo.png", 425*m, v_logo, 65*m, 65*m)
+
         draw_centered_text_overlay(background, team_b, 120*m, 560*m, v_team, fonts["bold_13"], fill=(0,0,0,255))
 
         if mode == "results" and score:
