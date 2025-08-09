@@ -44,6 +44,11 @@ def get_gymnase_address(codmatch, codent):
                     rue = match_adr.group(1).strip().lower()
                     code_postal = match_adr.group(2)
                     ville = match_adr.group(3).strip()
+
+                    ville = re.sub(r"\s*T[ée]l\.?:.*", "", ville.replace("\\'", "'"), flags=re.I)
+
+                    #print(f"DEBUG: 'nom': {nom}, 'rue': {rue}, 'code_postal': {code_postal}, 'ville': {ville}")
+
                     return {'nom': nom, 'rue': rue, 'code_postal': code_postal, 'ville': ville}
     return None
 

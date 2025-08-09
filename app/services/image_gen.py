@@ -76,9 +76,6 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         entities_str = list(settings.entities.keys())
         if entity not in entities_str: continue
 
-        print(f"Cat filt:{categories_filter}")
-        print(f"Cat code:{cat_code}")
-
         cat_info = settings.get_category_config(saison, cat_code)
         #title_entity = settings.entities.get(entity, "null")
         title_entity = cat_info['niveau']
