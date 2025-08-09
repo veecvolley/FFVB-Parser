@@ -5,9 +5,10 @@ services:
 
   veec-comm-generator:
     image: veec-comm-generator:vXXXX.XX.XX
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
     container_name: veec-comm-generator
     restart: unless-stopped
-    volumes:
-      - .:/app
     ports:
       - "8000:8000"

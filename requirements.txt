@@ -6,3 +6,4 @@ pdfplumber
 jinja2
 pyyaml
 httpx
+requests-cache

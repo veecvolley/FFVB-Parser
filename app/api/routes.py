@@ -23,14 +23,17 @@ def categories():
 
 @router.get("/image")
 def image(
+    saison: Optional[str] = "2025/2026",
     mode: Optional[str] = "planning",
-    title: Optional[str] = None,
+    title: Optional[str] = "Matchs",
     format: Optional[str] = "pub",
     categories: Optional[List[str]] = Query(None),
     date_start: Optional[str] = None,
     date_end: Optional[str] = None
 ):
-    img = generate_filtered_image(categories, date_start, date_end, title, format, mode)
+    print(f"{mode}")
+    print(f"{saison}")
+    img = generate_filtered_image(categories, date_start, date_end, title, format, mode, saison)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     buf.seek(0)

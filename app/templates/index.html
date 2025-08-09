@@ -16,15 +16,22 @@
             </div>
             <form id="filterForm">
                 <div class="row">
-                    <label for="mode_select">Type :</label><br>
-                    <select id="mode_select" name="mode_select" style="width:100%;">
+                    <label for="saison">Saison :</label><br>
+                    <select id="saison" name="saison">
+                        <option value="2024/2025">2024 / 2025</option>
+                        <option value="2025/2026" selected>2025 / 2026</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <label for="mode">Type :</label><br>
+                    <select id="mode" name="mode" style="width:100%;">
                         <option value="planning" selected>Planning</option>
                         <option value="results">Résultats</option>
                     </select>
                 </div>
                 <div class="row">
-                    <label for="custom_title">Titre :</label><br>
-                    <input type="text" id="custom_title" name="custom_title" style="width:100%;" placeholder="Ex: Week-end de Matchs !!">
+                    <label for="title">Titre :</label><br>
+                    <input type="text" id="title" name="title" style="width:100%;" placeholder="Ex: Week-end de Matchs !!">
                 </div>
                 <div class="row">
                     <label>Format :</label><br>

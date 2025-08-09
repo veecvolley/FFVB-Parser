@@ -39,16 +39,18 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.getElementById("loading").style.display = "inline";
         document.getElementById("resultImg").style.display = "none";
 
-        let title = document.getElementById("custom_title").value;
+        let saison = document.getElementById("saison").value;
+        let title = document.getElementById("title").value;
         let format = document.querySelector('input[name="format"]:checked').value;
         let cats = Array.from(document.getElementById("categories").selectedOptions).map(opt => opt.value);
         let date_start = document.getElementById("date_start").value;
         let date_end = document.getElementById("date_end").value;
-        let mode = document.getElementById("mode_select").value;
+        let mode = document.getElementById("mode").value;
 
         let url = "/image?mode=" + encodeURIComponent(mode);
         url += "&" + cats.map(c => "categories=" + encodeURIComponent(c)).join("&");
 
+        if (saison) url += "&saison=" + encodeURIComponent(saison);
         if (title) url += "&title=" + encodeURIComponent(title);
         if (format) url += "&format=" + encodeURIComponent(format);
         if (date_start) url += "&date_start=" + encodeURIComponent(date_start);

@@ -5,8 +5,12 @@ ffvb:
 club:
   name: "FS VAL D'EUROPE ESBLY COUPVRAY VB"
   id: "0775819"
-  #saison: "2024/2025"
-  saison: "2025/2026"
+  gymnases:
+    - GYMNASE DAVID DOUILLET
+    - DAVID DOUILLET
+    - PARC DES SPORTS
+    - ESPACE JEAN JACQUES LITZLER
+
 
 championnat:
   entities:
@@ -26,5 +30,5 @@ championnat:
   labels:
     1MB: "SM1 - Masculin"
     2FC: "SF1 - Féminin"
-    ACJ: "ACJ - Jeunes"
-    RMC: "SM1 - Masculin OLD"
+    PVA: "SVA - Volley-Assis (mixte)"
+    RMC: "SM1 - Masculin (2024/2025)"

@@ -171,7 +171,19 @@ button:hover {
     .form-card { min-width: 0; }
     .image-holder { min-width: 0; }
 }
-#mode_select {
+#mode {
+    font-size: 0.85em;
+    padding: 0.35em;
+}
+#saison {
+    font-size: 0.85em;
+    padding: 0.35em;
+}
+#categories {
+    font-size: 0.85em;
+    padding: 0.35em;
+}
+#format {
     font-size: 0.85em;
     padding: 0.35em;
 }
