@@ -36,7 +36,7 @@ class Settings:
         return self.config["championnat"]["labels"]
 
 
-    def get_category_config(self, saison: str, code: str) -> dict:
+    def get_season_config(self, saison: str, code: str) -> dict:
         """
         Récupère la configuration d'une catégorie pour une saison donnée.
         Retourne un dict vide si non trouvée.
