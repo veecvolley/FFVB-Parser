@@ -20,6 +20,36 @@ function getWeekendDates() {
   return { saturday: fmt(saturday), sunday: fmt(sunday) };
 }
 
+// --- Sync date_end sur le lendemain de date_start ---
+function syncEndToNextDay(opts = { force: false }) {
+  const start = document.getElementById("date_start");
+  const end   = document.getElementById("date_end");
+  if (!start || !end || !start.value) return;
+
+  // Empêche une fin avant le début
+  end.min = start.value;
+
+  // Calcule le lendemain (robuste fuseau)
+  let next;
+  if (start.valueAsDate) {
+    next = new Date(start.valueAsDate.getTime());
+    next.setDate(next.getDate() + 1);
+    // Si on force, ou si end est avant start, on met le lendemain
+    if (opts.force || !end.value || end.value < start.value) {
+      end.valueAsDate = next;
+    }
+  } else {
+    const [y, m, d] = start.value.split("-").map(Number);
+    next = new Date(y, m - 1, d);
+    next.setDate(next.getDate() + 1);
+    const iso = new Date(next.getTime() - next.getTimezoneOffset() * 60000)
+      .toISOString().slice(0, 10);
+    if (opts.force || !end.value || end.value < start.value) {
+      end.value = iso;
+    }
+  }
+}
+
 // --- Chargement des catégories ---
 async function loadCategoriesForSeason() {
   const saisonRaw = document.getElementById("saison")?.value || "";
@@ -128,6 +158,21 @@ document.addEventListener("DOMContentLoaded", async function () {
   document.getElementById("date_start").value = weekend.saturday;
   document.getElementById("date_end").value = weekend.sunday;
 
+  // Mettre la contrainte min et sync initiale
+  syncEndToNextDay({ force: false });
+
+  // Quand la date de début change -> forcer le lendemain et min
+  document.getElementById("date_start").addEventListener("change", () => {
+    syncEndToNextDay({ force: true });
+  });
+
+  // S'il met une date de fin avant le début, on recale
+  document.getElementById("date_end").addEventListener("change", () => {
+    const start = document.getElementById("date_start").value;
+    const end = document.getElementById("date_end").value;
+    if (start && end && end < start) syncEndToNextDay({ force: true });
+  });
+
   // Catégories dynamiques au démarrage et sur changement de saison
   await loadCategoriesForSeason();
   document.getElementById("saison")?.addEventListener("change", loadCategoriesForSeason);
@@ -215,3 +260,71 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+  const resultImg = document.getElementById("resultImg");
+  const dlIcon = document.getElementById("downloadIcon");
+  const shareIcon = document.getElementById("shareIcon");
+
+  // Masquer les icônes avant génération
+  document.getElementById("filterForm").addEventListener("submit", () => {
+    dlIcon.style.display = "none";
+    shareIcon.style.display = "none";
+  });
+
+  // Afficher les icônes après génération
+  resultImg.addEventListener("load", () => {
+    if (resultImg.src) {
+      dlIcon.style.display = "inline-flex";
+      shareIcon.style.display = "inline-flex";
+    }
+  });
+
+  // Téléchargement direct
+  dlIcon.addEventListener("click", () => {
+    if (!resultImg.src) return;
+    const a = document.createElement("a");
+    a.href = resultImg.src;
+    a.download = "image-veec.png";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+
+  // Partage avec fallback
+  shareIcon.addEventListener("click", async () => {
+    if (!resultImg.src) return;
+
+    try {
+      const resp = await fetch(resultImg.src, { cache: "no-store" });
+      const blob = await resp.blob();
+      const file = new File([blob], "image-veec.png", { type: blob.type || "image/png" });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: "Comm' VEEC",
+          text: "Voici l'image générée 🚀",
+          files: [file]
+        });
+        return;
+      }
+
+      if (navigator.share) {
+        await navigator.share({
+          title: "Comm' VEEC",
+          text: "Voici l'image générée 🚀",
+          url: resultImg.src
+        });
+        return;
+      }
+
+      // Fallback: téléchargement
+      const a = document.createElement("a");
+      a.href = resultImg.src;
+      a.download = "image-veec.png";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      console.warn("Partage indisponible, fallback download.", e);
+    }
+  });

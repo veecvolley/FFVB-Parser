@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/font-awesome_6.5.0_all.min.css">
 </head>
 <body>
   <div class="container-flex">
@@ -17,52 +18,71 @@
 
       <form id="filterForm">
         <div class="row">
-          <label for="saison">Saison :</label><br>
-          <select id="saison" name="saison" style="width:100%;">
+          <label for="saison"><i class="fa-solid fa-volleyball" style="font-size:15px;color:#333;"></i> Saison :</label><br>
+          <select id="saison" name="saison" style="width:90%;">
             <option value="2024-2025">2024 / 2025</option>
             <option value="2025-2026" selected>2025 / 2026</option>
           </select>
         </div>
 
         <div class="row">
-          <label for="mode">Type :</label><br>
-          <select id="mode" name="mode" style="width:100%;">
+          <label for="mode"><i class="fa-solid fa-clipboard-list" style="font-size:15px;color:#333;"></i> Type :</label><br>
+          <select id="mode" name="mode" style="width:90%;">
             <option value="planning" selected>Planning</option>
             <option value="results">Résultats</option>
           </select>
         </div>
 
         <div class="row">
-          <label for="title">Titre :</label><br>
-          <input type="text" id="title" name="title" style="width:100%;" placeholder="Ex: Week-end de Matchs !!">
+          <label for="title"><i class="fa-solid fa-caret-right" style="font-size:15px;color:#333;"></i> Titre :</label><br>
+          <input type="text" id="title" name="title" style="width:90%;" placeholder="Ex: Week-end de Matchs !!">
         </div>
 
         <div class="row">
-          <label>Format :</label><br>
+          <label><i class="fa-solid fa-image" style="font-size:15px;color:#333;"></i> Format :</label><br>
           <label><input type="radio" name="format" value="pub" checked> Publication</label>
           <label style="margin-left:1.2em;"><input type="radio" name="format" value="story"> Story</label>
         </div>
 
         <div class="row">
-          <label for="categories">Catégories :</label><br>
+          <label for="categories"><i class="fa-solid fa-list" style="font-size:15px;color:#333;"></i> Catégories :</label><br>
           <select id="categories" name="categories" multiple size="6" style="width:100%;"></select>
         </div>
 
         <div class="row dates-row" style="display:flex;gap:1em;">
           <div class="date-col" style="flex:1;">
-            <label for="date_start">Date début :</label>
-            <input type="date" id="date_start" name="date_start" style="width:100%;">
+            <label for="date_start"><i class="fa-solid fa-calendar-day" style="font-size:15px;color:#333;"></i> Date début :</label>
+            <input type="date" id="date_start" name="date_start" style="width:90%;">
           </div>
           <div class="date-col" style="flex:1;">
-            <label for="date_end">Date fin :</label>
-            <input type="date" id="date_end" name="date_end" style="width:100%;">
+            <label for="date_end"><i class="fa-solid fa-calendar-week" style="font-size:15px;color:#333;"></i> Date fin :</label>
+            <input type="date" id="date_end" name="date_end" style="width:90%;">
           </div>
         </div>
 
-        <div class="row" style="display:flex;align-items:center;gap:0.75em;">
-          <button type="submit">Générer l'image</button>
-          <span id="loading" style="display:none;">⏳ Génération...</span>
+      <div class="row" style="display:flex;align-items:center;gap:0.75em;justify-content:space-between;">
+        <!-- Bouton et loading à gauche -->
+        <div style="display:flex;align-items:center;gap:0.75em;">
+            <button type="submit">Générer l'image</button>
+            <span id="loading" style="display:none;">⏳ Génération...</span>
         </div>
+
+        <!-- Icônes à droite -->
+        <div style="display:flex;align-items:center;gap:0.75em;">
+            <!-- Icône téléchargement -->
+            <i id="downloadIcon"
+            class="fa-solid fa-download"
+            title="Télécharger l'image"
+            style="font-size:24px;cursor:pointer;display:none;color:#333;"></i>
+
+            <!-- Icône partage -->
+            <i id="shareIcon"
+            class="fa-solid fa-share-nodes"
+            title="Partager l'image"
+            style="font-size:24px;cursor:pointer;display:none;color:#333;"></i>
+        </div>
+      </div>
+
       </form>
     </div>
 
