@@ -1,0 +1,213 @@
+saisons:
+  2024-2025:
+    PVA:
+      titre: CHAMPIONNAT DE FRANCE VOLLEY ASSIS 6X6
+      type: Volley-Assis
+      genre: Mixte
+      category: Sénior
+      niveau: Championnat de France
+      label: SVA
+    SMH:
+      titre: COUPE DE FRANCE BEACH SENIOR MASCULIN POULE H
+      type: Beach-Volley
+      genre: Masculin
+      category: Sénior
+      niveau: Coupe de France
+      label: SMB
+    SMJ:
+      titre: COUPE DE FRANCE BEACH SENIOR MASCULIN POULE J
+      type: Beach-Volley
+      genre: Masculin
+      category: Sénior
+      niveau: Coupe de France
+      label: SMB
+    CMB:
+      titre: COUPE DE FRANCE BEACH M18 MASCULIN POULE B
+      type: Beach-Volley
+      genre: Masculin
+      category: M18
+      niveau: Coupe de France
+      label: M18G
+    CMF:
+      titre: COUPE DE FRANCE BEACH M18 MASCULIN POULE F
+      type: Beach-Volley
+      genre: Masculin
+      category: M18
+      niveau: Coupe de France
+      label: M18G
+    CMZ:
+      titre: COUPE DE FRANCE BEACH M18 MASCULIN POULE Z
+      type: Beach-Volley
+      genre: Masculin
+      category: M18
+      niveau: Coupe de France
+      label: M18G
+    RFD:
+      titre: 'CHAMPIONNAT REGIONAL SENIOR FEMININ : POULE D'
+      type: Volley-Ball
+      genre: Féminin
+      category: Sénior
+      niveau: Championnat Régional
+      label: SF
+    RMC:
+      titre: 'CHAMPIONNAT REGIONAL SENIOR MASCULIN : POULE C'
+      type: Volley-Ball
+      genre: Masculin
+      category: Sénior
+      niveau: Championnat Régional
+      label: SM
+    ARF:
+      titre: SENIOR FÉMININ
+      type: Volley-Ball
+      genre: Féminin
+      category: Sénior
+      niveau: Championnat Départemental
+      label: SF
+    ARA:
+      titre: SENIOR MASCULIN - POULE A
+      type: Volley-Ball
+      genre: Masculin
+      category: Sénior
+      niveau: Championnat Départemental
+      label: SM
+    L41:
+      titre: COMPET'LIB - LOISIR 1
+      type: Volley-Ball
+      genre: Mixte
+      category: Loisir
+      niveau: Championnat Loisir Compet'Lib
+      label: LX
+    L42:
+      titre: COMPET'LIB - LOISIR 2 - Poule A
+      type: Volley-Ball
+      genre: Mixte
+      category: Loisir
+      niveau: Championnat Loisir Compet'Lib
+      label: LX
+    L43:
+      titre: COMPET'LIB - LOISIR 2 - Poule B
+      type: Volley-Ball
+      genre: Mixte
+      category: Loisir
+      niveau: Championnat Loisir Compet'Lib
+      label: LX
+    L44:
+      titre: COMPET'LIB - LOISIR 2 - Poule haute
+      type: Volley-Ball
+      genre: Mixte
+      category: Loisir
+      niveau: Championnat Loisir Compet'Lib
+      label: LX
+    L61:
+      titre: COMPET'LIB - LOISIR 1
+      type: Volley-Ball
+      genre: Mixte
+      category: Loisir
+      niveau: Championnat Loisir Compet'Lib
+      label: LX
+    LM1:
+      titre: COMPET'LIB - LOISIR 1
+      type: Volley-Ball
+      genre: Mixte
+      category: Loisir
+      niveau: Championnat Loisir Compet'Lib
+      label: LX
+    F11:
+      titre: M11 FÉMININ
+      type: Volley-Ball
+      genre: Féminin
+      category: M11
+      niveau: Championnat Départemental
+      label: M11F
+    M11:
+      titre: M11 MASCULIN
+      type: Volley-Ball
+      genre: Masculin
+      category: M11
+      niveau: Championnat Départemental
+      label: M11G
+    M6F:
+      titre: M15 FEMININ 6x6 [77/94]
+      type: Volley-Ball
+      genre: Féminin
+      category: M15
+      niveau: Championnat Départemental
+      label: M15F
+    MF1:
+      titre: M15 FEMININ 6x6 [77/94] - Places 1 à 4
+      type: Volley-Ball
+      genre: Féminin
+      category: M15
+      niveau: Championnat Départemental
+      label: M15F
+    M6M:
+      titre: M15 MASCULIN 6x6 [77/93]
+      type: Volley-Ball
+      genre: Masculin
+      category: M15
+      niveau: Championnat Départemental
+      label: M15G
+    MM1:
+      titre: M15 MASCULIN 6x6 [77/93] - Places 1 à 4
+      type: Volley-Ball
+      genre: Masculin
+      category: M15
+      niveau: Championnat Départemental
+      label: M15G
+    JFB:
+      titre: M18 FEMININ 6x6 - Poule B
+      type: Volley-Ball
+      genre: Féminin
+      category: M18
+      niveau: Championnat Départemental
+      label: M18F
+    JM1:
+      titre: M18 MASCULIN 6x6
+      type: Volley-Ball
+      genre: Masculin
+      category: M18
+      niveau: Championnat Départemental
+      label: M18G
+    BMI:
+      titre: Championnat Interdep. M13 Masc. 95/77
+      type: Volley-Ball
+      genre: Masculin
+      category: M13
+      niveau: Championnat Départemental
+      label: M13G
+    FMB:
+      titre: FINALE CHAMPIONNAT INTERDEP M15 FEM. 6X6 POULE B
+      type: Volley-Ball
+      genre: Féminin
+      category: M15
+      niveau: Championnat Départemental
+      label: M15F
+    IMG:
+      titre: Championnat Interdep. M15 Fem 6x6 95/77 Poule 2
+      type: Volley-Ball
+      genre: Féminin
+      category: M15
+      niveau: Championnat Départemental
+      label: M15F
+  2025-2026:
+    PVA:
+      titre: CHAMPIONNAT DE FRANCE VOLLEY ASSIS 6X6
+      type: Volley-Assis
+      genre: Mixte
+      category: Sénior
+      niveau: Championnat de France
+      label: SVA
+    1MB:
+      titre: 'CHAMPIONNAT REGIONAL 1 SENIOR MASCULIN : POULE B'
+      type: Volley-Ball
+      genre: Masculin
+      category: Sénior
+      niveau: Championnat Régional
+      label: SM
+    2FC:
+      titre: 'CHAMPIONNAT REGIONAL 2 SENIOR FEMININ : POULE C'
+      type: Volley-Ball
+      genre: Féminin
+      category: Sénior
+      niveau: Championnat Régional
+      label: SF

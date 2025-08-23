@@ -18,8 +18,21 @@
 
       <form id="filterForm">
         <div class="row">
-          <label for="saison"><i class="fa-solid fa-volleyball" style="font-size:15px;color:#333;"></i> Saison :</label><br>
-          <select id="saison" name="saison" style="width:90%;">
+          <div style="display:flex;align-items:center;gap:0.5em;">
+            <label for="saison" style="margin:0;">
+              <i class="fa-solid fa-volleyball" style="font-size:15px;color:#333;"></i> Saison :
+            </label>
+            <!-- Icône mise à jour juste à droite -->
+            <i id="refreshConfigIcon"
+              class="fa-solid fa-rotate-right"
+              title="Mettre à jour la configuration"
+              style="font-size:18px;cursor:pointer;color:#333;"></i>
+
+            <!-- Message de statut -->
+            <span id="configStatus" aria-live="polite" style="display:none;font-size:0.9em;"></span>
+          </div>
+
+          <select id="saison" name="saison" style="width:70%;margin-top:0.4em;">
             <option value="2024-2025">2024 / 2025</option>
             <option value="2025-2026" selected>2025 / 2026</option>
           </select>

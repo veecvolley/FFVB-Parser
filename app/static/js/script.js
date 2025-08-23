@@ -73,7 +73,7 @@ async function loadCategoriesForSeason() {
     Object.entries(data).forEach(([code, info]) => {
       const opt = document.createElement("option");
       opt.value = code;
-      opt.text = `${info.type || ""} - ${info.genre || ""} - ${info.label} - ${info.nom || ""}`;
+      opt.text = `${info.titre || ""}`;
       sel.add(opt);
     });
 
@@ -328,3 +328,57 @@ document.addEventListener("DOMContentLoaded", () => {
       console.warn("Partage indisponible, fallback download.", e);
     }
   });
+
+const refreshIcon   = document.getElementById("refreshConfigIcon");
+const statusEl      = document.getElementById("configStatus");
+
+function setRefreshBusy(busy) {
+  if (busy) {
+    refreshIcon.dataset.busy = "1";
+    refreshIcon.classList.remove("fa-rotate-right");
+    refreshIcon.classList.add("fa-spinner", "fa-spin", "is-busy");
+    refreshIcon.title = "Mise à jour en cours…";
+    refreshIcon.style.cursor = "wait";
+  } else {
+    refreshIcon.dataset.busy = "0";
+    refreshIcon.classList.remove("fa-spinner", "fa-spin", "is-busy");
+    refreshIcon.classList.add("fa-rotate-right");
+    refreshIcon.title = "Mettre à jour la configuration";
+    refreshIcon.style.cursor = "pointer";
+  }
+}
+
+function showStatus(msg, type = "info", autohideMs = 3000) {
+  statusEl.className = "";           // reset classes
+  statusEl.classList.add(type);      // info | ok | error
+  statusEl.textContent = msg;
+  statusEl.style.display = "inline";
+
+  // auto‑masquage (sauf en cas d’erreur, on laisse visible)
+  if (type !== "error" && autohideMs > 0) {
+    clearTimeout(statusEl._t);
+    statusEl._t = setTimeout(() => {
+      statusEl.style.display = "none";
+    }, autohideMs);
+  }
+}
+
+refreshIcon?.addEventListener("click", async () => {
+  if (refreshIcon.dataset.busy === "1") return;
+
+  try {
+    setRefreshBusy(true);
+    showStatus("Mise à jour…", "info", 0);
+
+    const resp  = await fetch("/update-config", { method: "POST" });
+    const data  = await resp.json();
+
+    // Succès
+    showStatus(data.message || "Configuration mise à jour.", "ok", 2500);
+  } catch (err) {
+    // Erreur (on ne masque pas automatiquement)
+    showStatus("Échec de la mise à jour : " + err, "error", 0);
+  } finally {
+    setRefreshBusy(false);
+  }
+});
