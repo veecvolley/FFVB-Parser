@@ -201,3 +201,14 @@ button:hover {
 #imgModalContent.zoomed:active {
   cursor: grabbing;
 }
+
+#configStatus {
+  font-size: 0.9rem;
+  margin-left: 0.25rem;
+  opacity: 0.85;
+}
+.is-busy { opacity: 0.6; pointer-events: none; }
+#configStatus { font-size: 0.9rem; margin-left: 0.25rem; opacity: 0.85; }
+#configStatus.info { color:#555; }
+#configStatus.ok { color:#1b7f1b; }
+#configStatus.error { color:#b00020; }
