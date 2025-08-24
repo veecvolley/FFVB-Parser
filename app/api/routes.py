@@ -57,6 +57,8 @@ def image(
 
 @router.post("/update-config")
 def update_config():
+    club_id = settings.config["club"]["id"]
+    club_saisons = settings.config["club"]["saisons"]
     try:
         generate_config_seasons(club_id, club_saisons, "saisons.yaml")
         return {"message": "Configuration mise à jour avec succès."}

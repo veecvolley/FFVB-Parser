@@ -75,7 +75,10 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
         dt = datetime.strptime(date, "%Y-%m-%d")
         if date_start_dt and dt < date_start_dt: continue
         if date_end_dt and dt > date_end_dt: continue
-
+        if categories_filter and cat_code not in categories_filter: continue
+        # entities_str = list(settings.entities.keys())
+        # if entity not in entities_str: continue
+        print(f"{saison} | {cat_code}")
         cat_info = settings.get_season_config(saison, cat_code)
         title_entity = cat_info['niveau']
         category = cat_info['type']
