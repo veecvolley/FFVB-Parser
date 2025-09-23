@@ -39,7 +39,7 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
 
     # Offsets
     v = 200*m
-    v_title = 50*m
+    v_title = 65*m
     v_entity = 215*m
     v_category = 240*m
     v_team_name = 260*m
@@ -47,14 +47,14 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
     v_logo = 205*m
     v_team = 235*m
     v_date = 235*m
-    v_place = 213*m
-    v_place_type = 215*m
+    v_place = 217*m
+    v_place_type = 220*m
     v_sets = 238*m
     v_victory = 238*m
     v_score = 202*m
 
     draw_centered_text_overlay(background, title, 430*m, 660*m, v_title, fnt_gagalin_40,
-                                fill=(192,192,192,255), stroke_width=2, stroke_fill=(84,84,84,255))
+                                fill=(66,66,66,255), stroke_width=0, stroke_fill=(0,0,0,255))
 
     date_start_dt = datetime.strptime(date_start, "%Y-%m-%d") if date_start else None
     date_end_dt = datetime.strptime(date_end, "%Y-%m-%d") if date_end else None
