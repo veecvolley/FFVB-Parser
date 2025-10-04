@@ -3,6 +3,8 @@ FROM python:3.13-alpine
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     USER=app \
+    UID=1000 \
+    GID=1000 \
     MPLCONFIGDIR=/tmp
 
 RUN apk add --no-cache \
@@ -12,12 +14,13 @@ RUN apk add --no-cache \
         libpng-dev \
         freetype-dev \
         fontconfig \
-        && addgroup -S ${USER} && adduser -S ${USER} -G ${USER}
+    && addgroup -g ${GID} -S ${USER} \
+    && adduser -u ${UID} -S ${USER} -G ${USER}
 
 WORKDIR /app
 
 COPY . /app
-RUN chown -R ${USER}:${USER} /app
+RUN chown -R ${UID}:${GID} /app
 
 RUN pip install --upgrade --no-cache-dir pip \
  && if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi

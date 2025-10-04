@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request, Query
 from fastapi.responses import StreamingResponse, JSONResponse
 from typing import Optional, List
 from app.services.image_gen import generate_filtered_image
+from app.services.seasons import generate_config_seasons
 # from app.core.constants import CATEGORIES
 import io
 import pathlib
@@ -14,12 +15,19 @@ router = APIRouter()
 
 @router.get("/", response_class=StreamingResponse)
 def index(request: Request):
+    
     return templates.TemplateResponse("index.html", {"request": request, "version": VERSION})
 
 @router.get("/categories")
 def categories(saison: str = Query(..., description="Saison au format YYYY-YYYY (ou YYYY/YYYY)")):
-    saisons = settings.config.get("saisons", {})
-    cats = saisons.get(saison)
+    # Normalisation pour supporter les deux séparateurs
+    s = saison.strip()
+    seasons = getattr(settings, "saisons", {}) or {}
+    cats = (
+        seasons.get(s) or
+        seasons.get(s.replace("/", "-")) or
+        seasons.get(s.replace("-", "/"))
+    )
 
     if not cats:
         return JSONResponse(
@@ -40,8 +48,19 @@ def image(
 ):
     print(f"{mode}")
     print(f"{saison}")
+    print(f"{categories}")
     img = generate_filtered_image(categories, date_start, date_end, title, format, mode, saison)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     buf.seek(0)
     return StreamingResponse(buf, media_type="image/png")
+
+@router.post("/update-config")
+def update_config():
+    club_id = settings.config["club"]["id"]
+    club_saisons = settings.config["club"]["saisons"]
+    try:
+        generate_config_seasons(club_id, club_saisons, "saisons.yaml")
+        return {"message": "Configuration mise à jour avec succès."}
+    except Exception as e:
+        return {"message": f"Erreur : {e}"}

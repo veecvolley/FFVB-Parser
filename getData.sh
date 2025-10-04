@@ -6,11 +6,11 @@
 # iconv -f latin1 -t utf-8 export20242025.csv > export20242025_utf8.csv
 
 ## GET FULL PLANNING
-curl -X POST 'https://www.ffvbbeach.org/ffvbapp/resu/vbspo_calendrier_export_club.php' \
-     -H 'Content-Type: application/x-www-form-urlencoded' \
-     -d 'cnclub=0775819&cal_saison=2025/2026&typ_edition=E&type=RES&poule=1MB' \
-     > export20252026.csv
-iconv -f latin1 -t utf-8 export20252026.csv > export20252026_utf8.csv
+# curl -X POST 'https://www.ffvbbeach.org/ffvbapp/resu/vbspo_calendrier_export_club.php' \
+#      -H 'Content-Type: application/x-www-form-urlencoded' \
+#      -d 'cnclub=0775819&cal_saison=2025/2026&typ_edition=E&type=RES&poule=1MB' \
+#      > export20252026.csv
+# iconv -f latin1 -t utf-8 export20252026.csv > export20252026_utf8.csv
 
 # ## GET CALENDAR
 # ## Ex: https://www.ffvbbeach.org/ffvbapp/resu/vbspo_calendrier.php?saison=2025%2F2026&codent=LIIDF&poule=2FC&calend=COMPLET&equipe=4&x=10&y=8
@@ -25,3 +25,8 @@ iconv -f latin1 -t utf-8 export20252026.csv > export20252026_utf8.csv
 #      -H 'Content-Type: application/x-www-form-urlencoded' \
 #      -d 'codmatch=2FCA007&codent=LIIDF' \
 #      > gymnase.pdf
+
+curl -v 'https://www.ffvbbeach.org/ffvbapp/resu/planning_club_class.php?cnclub=0775819&saison=2024%2F2025' \
+     | pup 'table tr json{}' \
+     | jq -r '.. | objects | select(.class? == "titrepoule") | .text| gsub("&#39;"; "\u0027")'
+
