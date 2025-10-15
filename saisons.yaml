@@ -211,3 +211,66 @@ saisons:
       category: Sénior
       niveau: Championnat Régional
       label: SF
+    DFA:
+      titre: SENIOR FÉMININ - POULE A
+      type: Volley-Ball
+      genre: Féminin
+      category: Sénior
+      niveau: Championnat Départemental
+      label: SF
+    DFB:
+      titre: SENIOR FÉMININ - POULE B
+      type: Volley-Ball
+      genre: Féminin
+      category: Sénior
+      niveau: Championnat Départemental
+      label: SF
+    DMA:
+      titre: SENIOR MASCULIN - POULE A
+      type: Volley-Ball
+      genre: Masculin
+      category: Sénior
+      niveau: Championnat Départemental
+      label: SM
+    DMB:
+      titre: SENIOR MASCULIN - POULE B
+      type: Volley-Ball
+      genre: Masculin
+      category: Sénior
+      niveau: Championnat Départemental
+      label: SM
+    L41:
+      titre: COMPET'LIB - LOISIR 1
+      type: Volley-Ball
+      genre: Mixte
+      category: Loisir
+      niveau: Championnat Loisir Compet'Lib
+      label: LX
+    L42:
+      titre: COMPET'LIB - LOISIR 2 - Poule A
+      type: Volley-Ball
+      genre: Mixte
+      category: Loisir
+      niveau: Championnat Loisir Compet'Lib
+      label: LX
+    L43:
+      titre: COMPET'LIB - LOISIR 2 - Poule B
+      type: Volley-Ball
+      genre: Mixte
+      category: Loisir
+      niveau: Championnat Loisir Compet'Lib
+      label: LX
+    L63:
+      titre: COMPET'LIB - LOISIR 2 - Poule B
+      type: Volley-Ball
+      genre: Mixte
+      category: Loisir
+      niveau: Championnat Loisir Compet'Lib
+      label: LX
+    LM1:
+      titre: COMPET'LIB - LOISIR 1
+      type: Volley-Ball
+      genre: Mixte
+      category: Loisir
+      niveau: Championnat Loisir Compet'Lib
+      label: LX

@@ -26,7 +26,7 @@ def setup_graphics(format="pub", multiplier=2):
         "bold_13": ImageFont.truetype(FONTS_DIR / "OpenSans-ExtraBold.ttf", size=13*m),
         "bold_14": ImageFont.truetype(FONTS_DIR / "OpenSans-ExtraBold.ttf", size=14*m),
         "bold_15": ImageFont.truetype(FONTS_DIR / "OpenSans-ExtraBold.ttf", size=15*m),
-        "title": ImageFont.truetype(FONTS_DIR / "Gagalin-Regular.ttf", size=40*m),
+        "title": ImageFont.truetype(FONTS_DIR / "Gagalin-Regular.ttf", size=35*m),
         "sets": ImageFont.truetype(FONTS_DIR / "Coiny-Regular.ttf", size=30*m),
         "victory": ImageFont.truetype(FONTS_DIR / "Coiny-Regular.ttf", size=25*m),
     }
@@ -35,11 +35,10 @@ def setup_graphics(format="pub", multiplier=2):
 
 def generate_filtered_image(categories_filter=None, date_start=None, date_end=None, title=None, format="pub", mode="planning", saison=None):
     m, fonts, background = setup_graphics(format)
-    fnt_gagalin_40 = fonts["title"]
 
     # Offsets
     v = 200*m
-    v_title = 65*m
+    v_title = 68*m
     v_entity = 215*m
     v_category = 240*m
     v_team_name = 260*m
@@ -53,7 +52,7 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
     v_victory = 238*m
     v_score = 202*m
 
-    draw_centered_text_overlay(background, title, 430*m, 660*m, v_title, fnt_gagalin_40,
+    draw_centered_text_overlay(background, title, 1030*m, 660*m, v_title, fonts["title"],
                                 fill=(66,66,66,255), stroke_width=0, stroke_fill=(0,0,0,255))
 
     date_start_dt = datetime.strptime(date_start, "%Y-%m-%d") if date_start else None
