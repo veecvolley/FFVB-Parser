@@ -274,3 +274,17 @@ saisons:
       category: Loisir
       niveau: Championnat Loisir Compet'Lib
       label: LX
+    M6F:
+      titre: M15 FEMININ 6x6 [77/94]
+      type: Volley-Ball
+      genre: Féminin
+      category: M15
+      niveau: Championnat Départemental
+      label: M15F
+    M6M:
+      titre: M15 MASCULIN 6x6
+      type: Volley-Ball
+      genre: Masculin
+      category: M15
+      niveau: Championnat Départemental
+      label: M15G

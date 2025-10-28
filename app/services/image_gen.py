@@ -135,7 +135,7 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
             background = paste_image_fit_box(background, CLUBS_DIR / "no_logo.png", 170*m, v_logo, 65*m, 65*m)
 
         team_a, team_font_size = get_team_pseudo(cat_info['label'], cat_info['genre'], cat_info['type'], cat_info['niveau'], team_a)
-        draw_centered_text_overlay(background, team_a, 120*m, 310*m, v_team, fonts[team_font_size], fill=(0,0,0,255))
+        draw_centered_text_overlay(background, team_a.replace("-", " "), 120*m, 310*m, v_team, fonts[team_font_size], fill=(0,0,0,255))
 
         try:
             background = paste_image_fit_box(background, CLUBS_DIR / f"{logo_b}.png", 425*m, v_logo, 65*m, 65*m)
@@ -143,7 +143,7 @@ def generate_filtered_image(categories_filter=None, date_start=None, date_end=No
             background = paste_image_fit_box(background, CLUBS_DIR / "no_logo.png", 425*m, v_logo, 65*m, 65*m)
 
         team_b, team_font_size = get_team_pseudo(cat_info['label'], cat_info['genre'], cat_info['type'], cat_info['niveau'], team_b)
-        draw_centered_text_overlay(background, team_b, 120*m, 560*m, v_team, fonts[team_font_size], fill=(0,0,0,255))
+        draw_centered_text_overlay(background, team_b.replace("-", " "), 120*m, 560*m, v_team, fonts[team_font_size], fill=(0,0,0,255))
 
         print(f"==> {team_a} - {team_b}")
 
