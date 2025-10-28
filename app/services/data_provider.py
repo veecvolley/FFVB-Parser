@@ -77,3 +77,4 @@ def parse_csv_rows(saison):
 def parse_local_csv_rows():
     with open("export20242025_utf8.csv", newline="", encoding="utf-8") as csvfile:
         return csv.reader(csvfile, delimiter=";", quotechar='"')
+
